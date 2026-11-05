@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>元素旅途 · 林间断桥</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<main>
+  <header><div><p class="eyebrow">ELEMENTAL JOURNEY / PLAYABLE PROTOTYPE</p><h1>林间断桥 <span>01 / 丛林</span></h1></div><button id="reset">重新开始</button></header>
+  <p class="story">你是一名元素魔法使，受村庄委托前往圣地取回宝物。眼前的峡谷，挡住了你的去路。</p>
+  <section class="stage"><canvas id="game" width="1100" height="560" tabindex="0" aria-label="丛林关卡。A、D 或左右方向键移动，空格跳跃，E 向面前施法，1、2 切换元素。"></canvas><div class="badge">JUNGLE · 枯萎的旧桥</div></section>
+  <section class="controls"><div><p class="eyebrow">携带的元素 / 点击切换</p><div id="tools"></div></div><button id="reselect">重新选择元素</button><p class="keys"><kbd>A</kbd> <kbd>D</kbd> 移动 · <kbd>1</kbd> <kbd>2</kbd> 切换元素<br><kbd>Space</kbd> 跳跃 · <kbd>E</kbd> 向面前施法</p></section>
+  <p id="status" role="status" aria-live="polite"></p>
+  <details><summary>旅途笔记 · 需要一点提示？</summary><p>按 E 在人物面前放置 Plant 或 Soil，无固定施法点。随后切换 Water 或 Fire，面向原材料长按 E，累计施法约四秒才能完成藤蔓桥或石桥。松开 E、换错元素、转身或走远都会暂停建造，未完成的桥保留，回来长按即可继续。只有峡谷附近的反应能连接两岸，桥达到 100% 后才可通行。空格跳跃；掉落后返回左岸并保留进度。</p></details>
+  <footer>桌面浏览器 Demo · 程序绘制占位美术 · 无需安装</footer>
+</main>
+<dialog id="loadout"><p class="eyebrow">准备你的魔法</p><h2>带上两种元素</h2><p>旧支架能够托住生长的藤蔓，也能承接烧结的石块。你会如何修复这座桥？</p><div id="choices"></div><p id="choice-status" aria-live="polite">请选择两种元素。</p><button id="start" disabled>进入林间小径 →</button><small>四选二。选错也没关系，随时可以重新选择。</small></dialog>
+<dialog id="win"><p class="eyebrow">PATH RESTORED</p><h2>道路重新连接了。</h2><p>你跨过了峡谷。圣地仍在远方，而这片森林已因你的魔法恢复了一点生机。</p><button id="replay">再玩一次</button></dialog>
+<script src="script.js"></script>
+</body></html>
