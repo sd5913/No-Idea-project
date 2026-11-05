@@ -6,6 +6,9 @@
 >
 > 当前状态：规划阶段；本文件夹暂时只有文档。已明确元素魔法使接受村庄委托、穿越三个区域的故事方向；项目名、具体谜题与范围仍待团队及导师确认。
 
+** demo 1 https://elemental-odyssey-adventure.sandy-elm-0896.chatgpt.site/?utm_source=chatgpt.com **
+
+** demo 2 Elemental-Journey-Web **
 ## 中文
 
 ### 项目简介
