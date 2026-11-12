@@ -3,8 +3,8 @@
 > 
 > A mage, four elements, three regions. A pixel puzzle game that runs in the browser.
 
-**Demo ·** shturl.cc/gwdZ5HMS6OTOacaF6azgDpB63Mn5MdorgEc8KAepB95yf4BEAWjNmh
 **Prototype build ·** `Elemental-Journey-Web/dist` (playable forest level)
+
 **Repository ·** [https://github.com/sd5913/No-Idea-project](https://github.com/sd5913/No-Idea-project)
 
 ## Website introduction
