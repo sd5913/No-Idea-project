@@ -24,7 +24,7 @@ In the forest, water makes vines grow until they join into a bridge. On the tund
 
 ## How to play
 
-表格
+
 
 | Action | Keys |
 | --- | --- |
@@ -34,7 +34,7 @@ In the forest, water makes vines grow until they join into a bridge. On the tund
 | Switch element | <kbd>1</kbd> <kbd>2</kbd> (two-element version in the current prototype) |
 | Restart the section | the Restart button at the top left |
 
-表格
+
 
 | Element | Target | Result |
 | --- | --- | --- |
@@ -49,7 +49,7 @@ Every combination is one for one: one water gives one stone block, or one length
 
 ## What's playable
 
-表格
+
 
 | Level | Its own mechanic | Status |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ The three levels are built in parallel; state in the PR which level you touched.
 
 ## Code map
 
-表格
+
 
 | File | Used for |
 | --- | --- |
