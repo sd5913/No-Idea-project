@@ -1,0 +1,3167 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142027">
+<title>Elemental Journey · 元素旅途</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #111b21;
+  --panel: #1a282f;
+  --line: #31444b;
+  --text: #f1f7f6;
+  --muted: #a5bbc0;
+  --jungle: #a5e9ab;
+  --ice: #8edbe2;
+  --lava: #ffae81;
+  --focus: #c4f5f2;
+  font-family: Inter, "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: radial-gradient(ellipse at 22% -18%, #29434a 0, transparent 51%), var(--bg);
+  color: var(--text);
+}
+button { color: inherit; font: inherit; cursor: pointer; }
+button, canvas { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, canvas:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+button:disabled { cursor: default; }
+.layout { width: min(1232px, calc(100% - 48px)); margin: auto; padding: 15px 0 18px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 0 13px; min-height: 50px; }
+.identity { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.logo {
+  position: relative; flex: none; width: 39px; height: 39px; border-radius: 12px;
+  border: 1px solid #62818a; background: linear-gradient(145deg, #395b61, #1b363d);
+}
+.logo i { position: absolute; top: 10px; left: 10px; width: 17px; height: 17px; transform: rotate(45deg); border: 1.5px solid #b2eff0; border-radius: 3px; }
+.logo i::after { content: ''; position: absolute; inset: 4px; border-radius: 1px; background: #ffae81; }
+.identity h1 { font-size: clamp(17px, 2.4vw, 23px); letter-spacing: -.041em; line-height: 1.12; margin: 0; font-weight: 750; }
+.identity p { margin: 3px 0 0; font-size: 11px; color: var(--muted); letter-spacing: .15em; }
+.top-actions { display: flex; gap: 8px; flex: none; }
+.button {
+  background: #263940; border: 1px solid #41575e; padding: 9px 13px;
+  border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  color: var(--text); font-size: 12px; line-height: 1.1; white-space: nowrap;
+  min-height: 36px; font-weight: 650; transition: background .15s, border-color .15s;
+}
+.button:hover { background: #354d55; border-color: #698d94; }
+.button.primary { background: #b7edf0; border-color: #b7edf0; color: #132c33; }
+.button.primary:hover { background: #d6f7f7; }
+.button.ghost { background: transparent; }
+.button.ghost:hover { background: #2b3d45; }
+kbd {
+  display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 4px;
+  border: 1px solid #4e6670; border-radius: 4px; background: #203139;
+  color: #d7e7e9; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; line-height: 1;
+}
+.primary kbd { background: #d4f7f7; border-color: #90bdc2; color: #21434b; }
+.stage {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 18px;
+  background: #b9e2e9; border: 1px solid #6a8f9a;
+  box-shadow: 0 19px 55px #050b1066; aspect-ratio: 1120 / 528;
+}
+.stage[data-theme="jungle"] { border-color: #709983; background: #a5cdb4; }
+.stage[data-theme="cave"] { border-color: #426580; background: #142f43; }
+.stage[data-theme="volcano"] { border-color: #86594f; background: #37212b; }
+canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; cursor: crosshair; }
+.scene-hud {
+  position: absolute; z-index: 1; top: 18px; left: 19px; display: flex;
+  align-items: flex-start; gap: 12px; max-width: calc(100% - 38px); padding: 13px 16px 14px 13px;
+  border-radius: 13px; color: #173846; background: #f4fdf7eb;
+  border: 1px solid #ffffffac; box-shadow: 0 8px 22px #1a4d551b; pointer-events: none;
+}
+[data-theme="cave"] .scene-hud { color: #e6fafa; background: #142f42e8; border-color: #56859999; }
+[data-theme="volcano"] .scene-hud { color: #fff0dc; background: #2e2129ed; border-color: #b77c615e; }
+.stage-number {
+  display: grid; place-items: center; flex: none; width: 43px; height: 43px; border-radius: 10px;
+  margin-top: 3px; background: #2b7384; color: #f4ffff;
+  font: 650 16px/1 "IBM Plex Mono", ui-monospace, monospace;
+  box-shadow: inset 0 0 0 3px #e4ffff25;
+}
+[data-theme="jungle"] .stage-number { background: #316b54; }
+[data-theme="cave"] .stage-number { background: #315c70; }
+[data-theme="volcano"] .stage-number { background: #9a5039; }
+.scene-hud small { display: block; font-size: 10px; line-height: 1.25; letter-spacing: .085em; opacity: .84; margin-bottom: 4px; }
+.scene-hud h2 { margin: 0 0 5px; font-size: clamp(18px, 2.4vw, 27px); letter-spacing: -.045em; line-height: 1.1; font-weight: 760; }
+.scene-meta { position: absolute; top: 19px; right: 19px; display: grid; justify-items: end; gap: 7px; pointer-events: none; }
+.timing {
+  border: 1px solid #f1ffffc9; border-radius: 8px; padding: 8px 11px; background: #ecfaf5e8; color: #24525d;
+  font-size: 11px; font-weight: 700; line-height: 1.2; white-space: nowrap;
+}
+[data-theme="cave"] .timing { background: #16394bec; color: #d0f3f5; border-color: #528094; }
+[data-theme="volcano"] .timing { background: #35252bed; color: #ffdac4; border-color: #a36b55; }
+.timing { min-width: 124px; text-align: right; font-variant-numeric: tabular-nums; }
+.timing-bar { display: block; width: 100%; height: 3px; background: #82929265; border-radius: 10px; overflow: hidden; margin-top: 6px; }
+.timing-bar i { display: block; height: 100%; width: var(--timer, 0%); border-radius: inherit; background: currentColor; }
+.toast {
+  position: absolute; z-index: 2; bottom: 13px; left: 50%; transform: translateX(-50%);
+  min-width: max-content; max-width: 96%; padding: 8px 13px; border-radius: 7px;
+  background: #122c35ee; border: 1px solid #80b1b999; color: #f1ffff;
+  font-size: 12px; line-height: 1.28; pointer-events: none;
+}
+.toast[data-tone="success"] { background: #193831ef; border-color: #83d8a880; }
+.toast[data-tone="danger"] { background: #502a27f2; border-color: #ff9c7e91; }
+.console {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px 18px; margin-top: 11px; padding: 11px 12px; min-height: 68px; border-radius: 13px;
+  border: 1px solid var(--line); background: #1b2a31;
+}
+.loadout { display: flex; align-items: center; gap: 10px; }
+.loadout-title { display: grid; gap: 3px; min-width: 57px; line-height: 1.15; }
+.loadout-title strong { font-size: 12px; }
+.loadout-title span { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.elements { display: flex; gap: 5px; }
+.element {
+  position: relative; display: flex; align-items: center; gap: 6px; padding: 6px 7px 6px 8px;
+  border: 1px solid #354952; border-radius: 8px; min-width: 66px; min-height: 39px;
+  background: #1b2a32; color: #c8dce0; font-size: 13px; font-weight: 650;
+}
+.element.equipped { border-color: #65767a; background: #273840; }
+.element.active { background: color-mix(in srgb, var(--el) 16%, #1e2e35); border-color: var(--el); color: #fff; }
+.element:hover { border-color: var(--el); }
+.element .icon { flex: none; width: 13px; height: 13px; background: var(--el); border-radius: 3px; transform: rotate(45deg) scale(.82); }
+.element[data-element="fire"] .icon { border-radius: 2px 65% 58% 58%; }
+.element[data-element="water"] .icon { border-radius: 65% 55% 55% 4px; transform: rotate(-45deg) scale(.85); }
+.element[data-element="grass"] .icon { border-radius: 2px 8px 2px 8px; transform: rotate(-27deg) scale(.88); }
+.element kbd { margin-left: auto; min-width: 15px; padding: 0 3px; height: 16px; font-size: 9px; }
+.commands { display: flex; align-items: center; gap: 12px; }
+.controls-summary { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.controls-summary span { display: inline-flex; align-items: center; gap: 4px; }
+.console .button { min-height: 31px; padding: 6px 8px; }
+.route {
+  display: grid; grid-template-columns: 10fr 11fr 9fr; gap: 18px; align-items: center;
+  margin-top: 11px; padding: 0 1px;
+}
+.route-world { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.route-label { font-size: 11px; font-weight: 690; color: var(--ice); white-space: nowrap; }
+.route-world.jungle .route-label, .map-world.jungle h3, .map-world.jungle .map-num { color: var(--jungle); }
+.jungle .route-point::before { background: #476b5b; }
+.jungle .route-point.done::before { background: #78bb91; }
+.jungle .route-point.current::before, .jungle .route-point:hover::before { background: var(--jungle); }
+.route-world.fire .route-label { color: var(--lava); }
+.route-points { display: flex; flex: 1; gap: 4px; min-width: 0; }
+.route-point {
+  flex: 1; min-width: 8px; border: 0; padding: 4px 0; height: 18px;
+  background: transparent; color: #7eb9c8;
+}
+.route-point::before { content: ''; display: block; border-radius: 10px; height: 4px; width: 100%; background: #476571; transition: height .13s, background .13s; }
+.fire .route-point::before { background: #6d4a44; }
+.route-point.done::before { background: #83c8ce; }
+.fire .route-point.done::before { background: #e39873; }
+.route-point.current::before, .route-point:hover::before { height: 8px; background: #bdf5f2; }
+.fire .route-point.current::before, .fire .route-point:hover::before { background: #ffb28a; }
+.touch-controls { display: none; gap: 7px; justify-content: space-between; margin-top: 9px; }
+.touch-controls > div { display: flex; gap: 6px; }
+.touch-controls .button { touch-action: none; min-width: 43px; user-select: none; }
+dialog {
+  width: min(760px, calc(100vw - 32px)); max-height: min(82vh, 750px); padding: 0;
+  background: #1a2931; color: var(--text); border: 1px solid #52717b; border-radius: 17px;
+  box-shadow: 0 20px 90px #080b11a8; overflow: auto;
+}
+dialog::backdrop { background: #09121cd9; backdrop-filter: blur(6px); }
+.dialog-body { padding: clamp(16px, 4vw, 27px); }
+.dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.dialog-header h2 { font-size: 24px; letter-spacing: -.035em; margin: 0 0 3px; }
+.dialog-header p { margin: 0; color: var(--muted); font-size: 13px; }
+.dialog-close { padding-inline: 9px; min-width: 34px; }
+.map-world + .map-world { margin-top: 18px; }
+.map-world h3 { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ice); margin: 0 0 7px; }
+.map-world.fire h3 { color: var(--lava); }
+.map-world h3 small { color: var(--muted); font-size: 10px; font-weight: 500; }
+.map-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.map-card {
+  display: flex; align-items: center; text-align: left; gap: 6px; padding: 7px 7px; min-height: 42px;
+  border: 1px solid #405661; border-radius: 7px; background: #23353d; color: var(--text); font-size: 12px; line-height: 1.18;
+}
+.map-card:hover, .map-card.current { border-color: #9de5e7; background: #304b55; }
+.map-world.fire .map-card { background: #352c30; border-color: #654f50; }
+.map-world.fire .map-card:hover, .map-world.fire .map-card.current { border-color: #ffc4a1; background: #51393a; }
+.map-num { color: #b7e2e7; font: 11px "IBM Plex Mono", ui-monospace, monospace; }
+.map-world.fire .map-num { color: #ffd0b7; }
+.map-check { margin-left: auto; color: #99e3ad; }
+.guide { width: min(548px, calc(100vw - 32px)); }
+.guide p { font-size: 14px; color: #e4f1f1; line-height: 1.65; }
+.guide dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 14px; margin: 16px 0 0; font-size: 13px; color: #d9e7e8; }
+.guide dt { display: flex; align-items: center; gap: 3px; }
+.guide dd { margin: 0; line-height: 1.4; }
+.hint-copy { background: #253b43; border: 1px solid #4a6872; border-radius: 9px; padding: 11px 13px; }
+.win { width: min(472px, calc(100vw - 32px)); text-align: center; }
+.win h2 { margin: 13px 0 5px; font-size: 28px; }
+.win p { margin: 0 0 18px; color: #bcd1d2; }
+.win-actions { display: flex; justify-content: center; gap: 8px; }
+.jewel { display: inline-block; width: 53px; height: 53px; margin: 12px; transform: rotate(45deg); border-radius: 12px; background: linear-gradient(128deg, #fff0c3, #fe9774 43%, #e65846 45%, #f88b5c); box-shadow: 0 0 35px #fa8d5b72; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (min-width: 850px) and (max-height: 870px) {
+  .layout { width: min(1232px, calc(100% - 40px), max(795px, calc((100svh - 177px) * 1120 / 528))); }
+}
+@media (max-width: 950px) {
+  .controls-summary { display: none; }
+}
+@media (pointer: coarse), (max-width: 670px) {
+  .touch-controls { display: flex; }
+}
+@media (max-width: 620px) {
+  .layout { width: calc(100% - 20px); padding-top: 9px; }
+  .topbar { margin-bottom: 8px; gap: 8px; }
+  .identity { gap: 7px; }
+  .logo { width: 31px; height: 31px; border-radius: 8px; }
+  .logo i { width: 14px; height: 14px; left: 8px; top: 8px; }
+  .top-actions { gap: 4px; }
+  .top-actions kbd, .commands kbd { display: none; }
+  .top-actions .button { padding-inline: 7px; min-height: 31px; font-size: 11px; }
+  .stage { border-radius: 11px; }
+  .scene-hud { top: 6px; left: 6px; gap: 6px; border-radius: 7px; padding: 6px; max-width: 70%; }
+  .stage-number { width: 23px; height: 23px; font-size: 10px; margin-top: 0; }
+  .scene-hud small { font-size: 8px; margin-bottom: 2px; }
+  .scene-hud h2 { font-size: 16px; margin-bottom: 2px; }
+  .scene-meta { top: 6px; right: 6px; gap: 4px; }
+  .timing { font-size: 9px; min-width: 76px; padding: 5px 6px; }
+  .toast { font-size: 10px; min-width: 0; width: max-content; bottom: 5px; padding: 5px 7px; }
+  .console { margin-top: 8px; padding: 7px; min-height: 0; gap: 8px; }
+  .loadout { gap: 6px; }
+  .loadout-title { min-width: 0; }
+  .loadout-title span { display: none; }
+  .elements { gap: 4px; }
+  .element { gap: 3px; min-width: 45px; min-height: 34px; padding: 4px; }
+  .element kbd { display: none; }
+  .commands { gap: 5px; }
+  .console .button { font-size: 11px; padding-inline: 6px; }
+  .route { grid-template-columns: 1fr; gap: 4px; margin-top: 8px; }
+  .map-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; }
+}
+</style>
+</head>
+<body>
+<main class="layout">
+  <header class="topbar">
+    <div class="identity">
+      <div class="logo" aria-hidden="true"><i></i></div>
+      <div><h1>Elemental Journey</h1><p>元素旅途</p></div>
+    </div>
+    <div class="top-actions">
+      <button id="map-open" class="button primary" type="button">关卡地图 <kbd>M</kbd></button>
+      <button id="guide-open" class="button ghost" type="button">操作指南</button>
+    </div>
+  </header>
+
+  <section class="stage" id="view" data-theme="jungle" aria-label="横版游戏画面">
+    <canvas id="game" tabindex="0" aria-label="按 A、D 移动，空格跳跃，长按 E 施法。">此浏览器需要支持 Canvas 才能试玩。</canvas>
+    <div class="scene-hud">
+      <span id="scene-number" class="stage-number">01</span>
+      <div>
+        <small id="scene-region">丛林世界</small>
+        <h2 id="scene-title">荆棘小径</h2>
+      </div>
+    </div>
+    <div class="scene-meta">
+      <span class="timing" id="timing" hidden><span id="timing-text"></span><span class="timing-bar" aria-hidden="true"><i></i></span></span>
+    </div>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </section>
+
+  <section class="console" aria-label="元素装备和按键">
+    <div class="loadout">
+      <div class="loadout-title"><strong>元素</strong><span id="equipped-count">装备 0 / 2</span></div>
+      <div class="elements" id="elements" aria-label="选择施法元素"></div>
+    </div>
+    <div class="commands">
+      <div class="controls-summary" aria-hidden="true">
+        <span><kbd>A</kbd><kbd>D</kbd>移动</span>
+        <span><kbd>Space</kbd>跳跃</span>
+        <span><kbd>E</kbd>长按施法</span>
+      </div>
+      <button id="hint-open" class="button ghost" type="button" hidden>提示 <kbd>H</kbd></button>
+      <button id="retry" class="button ghost" type="button">重试 <kbd>R</kbd></button>
+    </div>
+  </section>
+  <div class="touch-controls" aria-label="触屏操作">
+    <div>
+      <button class="button" type="button" data-hold="a" aria-label="向左">◀</button>
+      <button class="button" type="button" data-hold="d" aria-label="向右">▶</button>
+    </div>
+    <div>
+      <button class="button" type="button" data-hold="w">跳跃 / 攀爬</button>
+      <button id="touch-cast" class="button primary" type="button">按住施法</button>
+    </div>
+  </div>
+  <nav id="route" class="route" aria-label="路线进度和快速选关"></nav>
+</main>
+
+<dialog id="map" aria-labelledby="map-title">
+  <div class="dialog-body">
+    <div class="dialog-header">
+      <div><h2 id="map-title">关卡地图</h2><p>选择任意一关直接试玩。</p></div>
+      <form method="dialog"><button class="button ghost dialog-close" type="submit" aria-label="关闭关卡地图">✕</button></form>
+    </div>
+    <div id="map-levels"></div>
+  </div>
+</dialog>
+<dialog id="guide" class="guide" aria-labelledby="guide-title">
+  <div class="dialog-body">
+    <div class="dialog-header">
+      <h2 id="guide-title">操作指南</h2>
+      <form method="dialog"><button class="button ghost dialog-close" type="submit" aria-label="关闭操作指南">✕</button></form>
+    </div>
+    <dl>
+      <dt><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd></dt><dd>左右移动</dd>
+      <dt><kbd>Space</kbd></dt><dd>跳跃</dd>
+      <dt><kbd>W</kbd> / <kbd>↑</kbd></dt><dd>跳跃，靠近藤蔓时按住攀爬</dd>
+      <dt><kbd>1</kbd>–<kbd>4</kbd> / <kbd>Q</kbd></dt><dd>选元素，或在已装备的两种元素之间切换</dd>
+      <dt><kbd>E</kbd></dt><dd>长按，朝角色面对的方向施法。也可以在画面中按住想施法的位置</dd>
+      <dt><kbd>M</kbd><kbd>H</kbd><kbd>R</kbd></dt><dd>关卡地图、查看可用提示、重试本关</dd>
+    </dl>
+    <p>给草浇水会长出可行走的藤桥。松土踩上就会塌，用火烧成石头后可以站在上面。火也能点燃草木，草遇到崖壁会长成可攀爬的藤蔓。</p>
+  </div>
+</dialog>
+<dialog id="hint" class="guide" aria-labelledby="hint-title">
+  <div class="dialog-body">
+    <div class="dialog-header">
+      <div><h2 id="hint-title">本关提示</h2><p id="hint-subtitle"></p></div>
+      <form method="dialog"><button class="button ghost dialog-close" type="submit" aria-label="关闭本关提示">✕</button></form>
+    </div>
+    <p class="hint-copy" id="hint-copy"></p>
+    <form method="dialog"><button class="button primary" type="submit">继续试玩</button></form>
+  </div>
+</dialog>
+<dialog id="win" class="win" aria-labelledby="win-title">
+  <div class="dialog-body">
+    <div class="jewel" aria-hidden="true"></div>
+    <h2 id="win-title">获得火山宝物</h2>
+    <p id="win-count"></p>
+    <div class="win-actions">
+      <button id="win-replay" type="button" class="button primary">从丛林重玩</button>
+      <button id="win-map" type="button" class="button ghost">查看关卡地图</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+const VIEW_W = 1120;
+const VIEW_H = 528;
+const FLOOR = 425;
+
+const elements = {
+  fire:  { name: '火', key: '1', color: '#ff9d63', pale: '#ffe0a4' },
+  water: { name: '水', key: '2', color: '#68d8fa', pale: '#ccf8ff' },
+  earth: { name: '土', key: '3', color: '#e2b681', pale: '#fff0cd' },
+  grass: { name: '草', key: '4', color: '#82dbad', pale: '#e1ffe8' }
+};
+
+const feature = (kind, id, x, y, name, accepts, cast, options = {}) => ({
+  kind, id, x, y, name, accepts, cast, ...options
+});
+
+function surface(s, id, x, y, w, options = {}) {
+  const item = { id, x, y, w, h: 16, kind: 'stone', ...options };
+  s.state.surfaces.set(id, item);
+  return item;
+}
+
+function lift(s, vent, top, seconds, width = 76) {
+  const item = { id: vent.id, x: vent.x, y: vent.y + 5, top, width, until: s.time + seconds };
+  s.state.lifts.set(vent.id, item);
+  return item;
+}
+
+function isLiftOn(s, id) {
+  return (s.state.lifts.get(id)?.until || 0) > s.time;
+}
+
+function hotVent(id, x, y, name, top, seconds, width, options = {}) {
+  return feature('vent', id, x, y - 5, name, ['water'], (s, f) => {
+    lift(s, f, top, seconds, width);
+    say('热气从地面升了起来。');
+  }, options);
+}
+
+function makeVineBridge(s, key, x, w, arc) {
+  surface(s, key, x, FLOOR, w, { kind: 'vineBridge', arc });
+  addGrowth(s, key, x + w / 2, FLOOR, {
+    kind: 'bridge', surfaceId: key, x1: x, w, arc,
+    targets: [s.bridge.target]
+  });
+  say('藤蔓攀住了两岸。');
+}
+
+function windPower(s) {
+  if (s.id !== 'i03' || s.state.deflected === 2 || s.time < s.state.calmUntil) return 0;
+  return ease(clamp((s.time - s.state.calmUntil) / 1.42, 0, 1));
+}
+
+function avalanche(s, p) {
+  const x = p.x - s.start;
+  const state = s.state;
+  if (!state.warned && x >= 250) {
+    state.warned = true;
+    if (!state.reinforced) {
+      state.stopUntil = s.time + 1.25;
+      p.vx = 0;
+      say('前方有雪崩。不用土筑墙、用火加固，继续走会被砸死。', 'danger', 5);
+    }
+  }
+  if (state.rollStart === undefined && (state.reinforced || x >= 380)) state.rollStart = s.time;
+  if (state.rollStart === undefined || state.stopped) return;
+  const front = s.width - 32 - (s.time - state.rollStart) * 464;
+  if (state.reinforced && front <= 493) {
+    state.stopped = true;
+    state.stoppedAt = s.time;
+    say('挡雪墙拦住了雪崩。');
+    return;
+  }
+  if (!state.reinforced && state.wall && front < 489) removeLooseEarth(s, 'avalanche-wall');
+  if (x + 12 >= front && x - 12 <= front + 185 && p.y > 165)
+    fail('被雪崩砸中了，回到本关起点。');
+}
+
+function ropePose(s) {
+  const initial = { x: s.ropes.right, y: s.ropes.y, angle: 0 };
+  const motion = s.state.bridgeMotion;
+  if (!motion) return initial;
+  const t = clamp((s.time - motion.start) / motion.duration, 0, 1);
+  const smooth = ease(t);
+  return {
+    x: motion.from.x + (motion.to.x - motion.from.x) * smooth,
+    y: motion.from.y + (motion.to.y - motion.from.y) * (motion.landing ? t * t : smooth),
+    angle: motion.from.angle + (motion.to.angle - motion.from.angle) * smooth +
+      (motion.swing || 0) * Math.sin(Math.PI * t)
+  };
+}
+
+function moveBridge(s, to, duration, landing = false, swing = 0) {
+  s.state.bridgeMotion = { from: ropePose(s), to, start: s.time, duration, landing, swing };
+}
+
+function syncRopeBridge(s) {
+  const pose = ropePose(s);
+  const length = s.ropes.right - s.ropes.left;
+  const w = length * Math.cos(pose.angle);
+  const ramp = length * Math.sin(pose.angle);
+  const old = s.state.surfaces.get('rope-bridge');
+  const deck = surface(s, 'rope-bridge', pose.x - w, pose.y - ramp, w, { kind: 'plank', h: 14, ramp });
+  if (old && player.support === `${s.id}:rope-bridge`) {
+    const t = clamp((player.x - s.start - old.x) / old.w, 0, 1);
+    player.x += deck.x + t * deck.w - (old.x + t * old.w);
+    player.y += deck.y + t * deck.ramp - (old.y + t * old.ramp);
+  }
+}
+
+function settleBridge(s) {
+  const motion = s.state.bridgeMotion;
+  if (!motion?.landing || s.time < motion.start + motion.duration || s.state.bridgeDown) return;
+  s.state.bridgeDown = true;
+  say('木桥落稳了。');
+}
+
+function jungleRoom(id, title, width, options = {}) {
+  return { id, title, width, chapter: 'jungle', features: [], ...options };
+}
+
+function jungleBramble(id, x, height = 132, w = 52) {
+  return feature('bramble', id, x, FLOOR - height * .52, '枯藤', ['fire'],
+    (s, f) => burnBramble(s, f), {
+      height, w, duration: 1.05, persistent: true, radius: w / 2 + 18, autoRange: Math.max(156, w / 2 + 66),
+      available: s => !s.state.burned.has(id)
+    });
+}
+
+function burnBramble(s, f) {
+  if (!f.available(s)) return;
+  s.state.burned.add(f.id);
+  s.state.residue.set(f.id, { kind: 'ash', x: f.x - f.w / 2, y: FLOOR, w: f.w, until: s.time + 5 });
+}
+
+function brambleBlocks(s) {
+  return s.features.filter(f => f.kind === 'bramble' && f.available(s)).map(f => {
+    const height = f.height * (1 - reaction(s, f.id, 'fire') * .6);
+    return { x: f.x - f.w / 2, y: FLOOR - height, w: f.w, h: height, thorns: f.w > 52 };
+  });
+}
+
+function updateBrambles(s) {
+  for (const f of s.features) {
+    if (f.kind === 'bramble' && [...s.state.fires.values()].some(fire =>
+      s.time - fire.born > .55 && Math.abs(f.x - fire.x) < f.w / 2 + 42 && Math.abs(fire.y - FLOOR) < 7))
+      burnBramble(s, f);
+  }
+}
+
+function jungleWaterTarget(s, x, y) {
+  if (activeElement !== 'fire' || !s.pools) return null;
+  for (const [left, right, floor] of s.pools) {
+    const point = clamp(x - s.start, left, right);
+    if (Math.abs(point - (x - s.start)) > 53 || Math.abs(floor - y) > 58) continue;
+    const id = 'pool-steam-' + left;
+    const target = feature('pool', id, point, floor - 5, '积水', ['fire'],
+      (region, f) => { lift(region, f, floor - 187, 12, 114); },
+      { duration: .72, range: 215 });
+    if (castDistance(s, target) <= target.range) return target;
+  }
+  return null;
+}
+
+function waterPlant(s, plant, facing) {
+  const [left, right, floor, rise = 9] = s.vineBank || [];
+  const leftBank = facing > 0 && plant.x >= left - 105 && plant.x <= left;
+  const rightBank = facing < 0 && plant.x >= right && plant.x <= right + 105;
+  const spansBanks = plant.y === floor && (leftBank || rightBank);
+  const farBank = facing > 0 ? right : left;
+  const end = spansBanks ? farBank + facing * 17 : plant.x + facing * 116;
+  const x = Math.min(plant.x, end);
+  const w = Math.abs(plant.x - end);
+  const id = spansBanks ? 'spanning-vine' : `bridge-${plant.id}-${facing}`;
+  const old = s.state.plants.get(id);
+  const arc = spansBanks ? rise : 6;
+  const fromRight = end < plant.x;
+  if (old && old.burnAt === undefined && old.x1 === x && old.w === w) {
+    old.until = s.time + 24;
+    return;
+  }
+  surface(s, id, x, plant.y, w, { kind: 'vineBridge', arc });
+  addGrowth(s, id, x + w / 2, plant.y, {
+    kind: 'bridge', x1: x, w, arc, fromRight, surfaceId: id,
+    growthTime: spansBanks ? 1.45 : .72, until: s.time + 24, born: s.time
+  });
+}
+
+const jungleLevels = [
+  jungleRoom('j01', '荆棘小径', 690, {
+    features: [jungleBramble('thicket', 370, 47, 284)],
+    init: () => ({ burned: new Set() }), blocks: brambleBlocks, update: updateBrambles
+  }),
+  jungleRoom('j02', '雨后的种槽', 815, {
+    ground: [[0, FLOOR, 246], [603, FLOOR, 212]], pit: [246, 603, 'creek'],
+    init(s) {
+      surface(s, 'stone-a', 332, 390, 63, { kind: 'looseEarth' });
+      surface(s, 'stone-b', 460, 374, 66, { kind: 'looseEarth' });
+    }
+  }),
+  jungleRoom('j03', '断根斜坡', 860, {
+    ground: [[0, FLOOR, 345], [345, 263, 288], [633, FLOOR, 227]]
+  }),
+  jungleRoom('j04', '古树热泉', 860, {
+    ground: [[0, FLOOR, 345], [345, 247, 285], [630, FLOOR, 230]],
+    pools: [[157, 252, FLOOR]],
+    features: [hotVent('hot-rock', 282, FLOOR, '热石', 243, 13, 110)]
+  }),
+  jungleRoom('j05', '悬崖花架', 815, {
+    ground: [[0, FLOOR, 253], [572, FLOOR, 243]], pit: [253, 572, 'creek'],
+    vineBank: [253, 572, FLOOR]
+  }),
+  jungleRoom('j06', '石匠遗台', 870, {
+    ground: [[0, FLOOR, 254], [615, FLOOR, 255]], pit: [254, 615, 'creek'],
+    init(s) {
+      surface(s, 'loose-stone', 337, 355, 64, { kind: 'looseEarth' });
+      surface(s, 'far-stone', 487, 388, 62, { kind: 'looseEarth' });
+    }
+  }),
+  jungleRoom('j07', '藤后溪口', 890, {
+    ground: [[0, FLOOR, 310], [549, FLOOR, 341]], pit: [310, 549, 'creek'],
+    features: [jungleBramble('near-thicket', 227), jungleBramble('far-thicket', 654, 83)],
+    vineBank: [310, 549, FLOOR],
+    init(s) {
+      surface(s, 'islet', 410, 396, 57);
+      return { burned: new Set() };
+    },
+    blocks: brambleBlocks, update: updateBrambles
+  }),
+  jungleRoom('j08', '积水石窟', 860, {
+    ground: [[0, FLOOR, 342], [342, 237, 291], [633, FLOOR, 227]],
+    pools: [[174, 320, FLOOR]]
+  }),
+  jungleRoom('j09', '高枝渡口', 900, {
+    ground: [[0, FLOOR, 255], [615, FLOOR, 285]], pit: [255, 615, 'creek'],
+    vineBank: [255, 615, FLOOR],
+    init: s => { surface(s, 'driftwood', 263, 405, 81, { kind: 'plank', drift: { distance: 268, period: 6.2 } }); }
+  }),
+  jungleRoom('j10', '古树山门', 1005, {
+    ground: [[0, FLOOR, 319], [319, 267, 185], [801, 267, 99], [900, FLOOR, 105]],
+    pit: [504, 801, 'creek'], vineBank: [504, 801, 267],
+    pools: [[158, 286, FLOOR]],
+    features: [feature('gem', 'treasure', 851, 220, '丛林宝物', [], null)],
+    init(s) {
+      surface(s, 'root-islet', 619, 287, 61, { kind: 'plank' });
+    },
+    treasureExit: true, transition: 'snow'
+  })
+];
+
+const iceLevels = [
+  {
+    id: 'i01', original: 1, chapter: 'snow', width: 702,
+    title: '雪堆初遇',
+    hint: '靠近雪堆，面向它长按 E，用火慢慢融雪。你也可以隔着一小段距离，先朝空地放一团火，再对火团施水。站进蒸汽升到顶后，向右跳过雪堆。',
+    features: [
+      feature('drift', 'mound', 365, 383, '雪堆', ['fire'], s => {
+        s.state.melted = true;
+        s.state.meltTime = s.time;
+        say('雪堆融化了。');
+      }, { duration: 1.52, autoRange: 116, range: 140, persistent: true, available: s => !s.state.melted })
+    ],
+    blocks(s) {
+      if (s.state.melted) return [];
+      const amount = reaction(s, 'mound', 'fire');
+      const w = 137 * (1 - amount * .44);
+      const h = 119 * (1 - amount * .94);
+      return [{ x: 372 - w / 2, y: FLOOR - h, w, h }];
+    }
+  },
+  {
+    id: 'i02', original: 2, chapter: 'snow', width: 775,
+    title: '冰裂萌芽',
+    hint: '靠近左岸的短木桩，用草长按 E。藤蔓缠住对岸木桩后就可以踩上去。',
+    ground: [[0, 425, 270], [531, 425, 244]], pit: [270, 531, 'ice'],
+    posts: [254, 548],
+    bridge: { id: 'stake-bridge', x: 250, w: 302, arc: 39, target: 'near-post', el: 'grass' },
+    features: [
+      feature('post', 'near-post', 254, 403, '左岸木桩', ['grass'], s => {
+        makeVineBridge(s, 'stake-bridge', 250, 302, 39);
+      }, { duration: 1.8, persistent: true, available: s => !s.state.surfaces.has('stake-bridge') })
+    ]
+  },
+  {
+    id: 'i03', original: 3, chapter: 'snow', width: 1195,
+    title: '暴风雪走廊',
+    hint: '风会越来越大。用土长按 E 立起挡风墙。第一阵风会停两秒，下一阵刮起来时再用土挡一次。',
+    init: () => ({ deflected: 0, calmUntil: 0 }),
+    features: [
+      feature('windWall', 'wind-wall', 0, 378, '挡风墙', ['earth'], (s, f) => {
+        s.state.deflected++;
+        s.state.wall = { x: f.x, time: s.time };
+        addEarthWall(s, 'wind-wall', f.x, FLOOR);
+        s.state.calmUntil = s.time + 2;
+        say(s.state.deflected === 1 ? '挡住了第一阵风。' : '第二阵风停了。');
+      }, {
+        duration: .78,
+        point: (s, p) => ({ x: clamp(p.x - s.start + 58, 85, s.width - 50), y: 378 }),
+        available: s => s.state.deflected < 2 && s.time >= s.state.calmUntil
+      })
+    ]
+  },
+  {
+    id: 'i05', original: 5, chapter: 'snow', width: 550,
+    title: '冰封洞门',
+    hint: '走到门前，用火长按 E，等冰层化开后进入冰洞。',
+    features: [
+      feature('gate', 'cave-entry', 476, 351, '冰封洞门', ['fire'], s => {
+        s.state.open = true;
+        say('洞门的冰层融化了。');
+      }, { duration: 1.48, persistent: true, autoRange: 135, available: s => !s.state.open })
+    ],
+    blocks: s => s.state.open ? [] : [{ x: 429, y: 0, w: 96, h: FLOOR }],
+    transition: 'cave'
+  },
+  {
+    id: 'i06', original: 6, chapter: 'cave', width: 732,
+    title: '垂冰封路',
+    hint: '从左侧靠近冰锥，站在它的正下方之前用火长按 E。直接从下方走过会被砸到。',
+    features: [
+      feature('icicles', 'icicles', 415, 319, '低垂冰锥', ['fire'], s => {
+        s.state.melted = true;
+        s.state.meltTime = s.time;
+        say('冰锥化成了水。');
+      }, { w: 236, duration: 1.32, persistent: true, autoRange: 182, available: s => !s.state.melted })
+    ],
+    update(s, p) {
+      if (s.state.melted) return;
+      const x = p.x - s.start;
+      if (s.state.dropAt === undefined && x > 309 && x < 528) s.state.dropAt = s.time;
+      if (s.state.dropAt !== undefined && s.time - s.state.dropAt >= .31 && x > 309 && x < 537)
+        fail('被掉落的冰锥砸中了，回到本关起点。');
+    }
+  },
+  {
+    id: 'i07', original: 7, chapter: 'cave', width: 834,
+    title: '漆黑冰洞',
+    hint: '火把藏在暗处。走近其中一支，用火长按 E。点亮任意一支，冰洞出口就会打开。',
+    darkGate: true,
+    features: [307, 569].map((x, i) => {
+      const id = `torch-${i + 1}`;
+      return feature('torch', id, x, 343, '火把', ['fire'], s => {
+        s.state[id] = true;
+        s.state.litAt ??= gameTime;
+        say('火光照亮了冰洞。');
+      }, { duration: .7, persistent: true, autoRange: 146, available: s => !s.state[id] });
+    })
+  },
+  {
+    id: 'i08', original: 8, chapter: 'cave', width: 841,
+    title: '藤蔓攀壁',
+    hint: '在冰壁脚下用草长按 E。藤蔓长到顶部后，贴近它，按住 W 或 ↑ 攀爬。也可以试试借蒸汽向上跳。',
+    ground: [[0, 425, 425], [425, 249, 218], [643, 425, 198]],
+    vine: { x: 416, base: 426, top: 244, target: 'wall-root' },
+    features: [
+      feature('root', 'wall-root', 407, 409, '冰壁根须', ['grass'], s => {
+        s.state.grown = true;
+        addGrowth(s, 'wall-root', s.vine.x, s.vine.base, {
+          kind: 'vine', top: s.vine.top, growthTime: 0,
+          flag: 'grown', targets: ['wall-root']
+        });
+        say('藤蔓爬到了冰壁顶端。');
+      }, { duration: 1.65, persistent: true, available: s => !s.state.grown })
+    ]
+  },
+  {
+    id: 'i10', original: 10, chapter: 'cave', width: 859,
+    title: '蒸汽升井',
+    hint: '在井口先用火加热，再用水产生蒸汽。乘气流升到高台，向右回到地面。',
+    ground: [[0, 425, 465], [465, 262, 202], [667, 425, 192]],
+    features: [
+      feature('well', 'heat-well', 416, 411, '冰井', ['fire'], s => {
+        s.state.heated = true;
+        say('井口开始发热。');
+      }, { duration: .82, available: s => !s.state.heated }),
+      feature('wellWater', 'steam-well', 416, 411, '加热的井口', ['water'], (s, f) => {
+        lift(s, { ...f, y: 420 }, 222, 9, 100);
+        s.state.steam = true;
+        say('热气从井口升了起来。');
+      }, { available: s => s.state.heated && !isLiftOn(s, 'steam-well') })
+    ],
+    transition: 'surface'
+  },
+  {
+    id: 'i12', original: 12, chapter: 'ridge', width: 871,
+    title: '冰原藤桥',
+    hint: '在左岸边用草长按 E 种下幼芽，再用水浇灌。等藤桥延伸到右岸后走过去。',
+    ground: [[0, 425, 310], [638, 425, 233]], pit: [310, 638, 'ice'],
+    vineBank: [310, 638, FLOOR, 26],
+    features: [
+      feature('shoreRoot', 'left-seed', 294, 407, '左岸浅土', ['grass'], s => {
+        s.state.leftSeed = true;
+        addGrowth(s, 'left-seed', 294, FLOOR, { flag: 'leftSeed' });
+        say('左岸长出了幼芽。');
+      }, { duration: .68, available: s => !s.state.leftSeed })
+    ]
+  },
+  {
+    id: 'i14', original: 14, chapter: 'ridge', width: 851,
+    title: '雪崩坡道',
+    hint: '在坡脚用土筑墙，再用火加固。等墙挡下雪崩，从墙的上方跳过去。',
+    features: [
+      feature('snowWall', 'avalanche-wall', 456, 375, '挡雪墙', ['earth'], s => {
+        s.state.wall = true;
+        addEarthWall(s, 'avalanche-wall', 456, FLOOR);
+        say('挡雪墙立起来了。');
+      }, { duration: .84, persistent: true, autoRange: 224, available: s => !s.state.wall && s.state.rollStart === undefined })
+    ],
+    update: avalanche,
+    blocks: () => []
+  },
+  {
+    id: 'i15', original: 15, chapter: 'ridge', width: 741,
+    title: '冰火交界',
+    hint: '跳上石台取得雪山宝物，再沿雪岭向右进入火山。',
+    features: [feature('gem', 'treasure', 550, 326, '雪山宝物', [], null)],
+    init(s) { surface(s, 'gem-pedestal', 507, 373, 86, { kind: 'pedestal' }); },
+    treasureExit: true, transition: 'volcano'
+  }
+];
+
+function lavaFallPoint(order, x, y, threshold) {
+  const id = `flow-${order}`;
+  return feature('flowPoint', id, x, y, '流动岩浆', ['water'], (s, f) => {
+    surface(s, id, f.x - 108, f.y - 11, 114, {
+      kind: 'magmaStone', until: s.time + 6.8, life: 6.8, flow: { dx: -12, dy: 18 }
+    });
+    say('凝固的岩浆沿着岩壁滑落。');
+  }, {
+    autoRange: 212, range: 292, radius: 78,
+    available(s) {
+      const item = s.state.surfaces.get(id);
+      return player.y < threshold && (!item || (item.y > y + 44 && player.support !== `v04:${id}`));
+    }
+  });
+}
+
+const fireLevels = [
+  {
+    id: 'v01', chapter: 'volcano', width: 840,
+    title: '岩浆踏石',
+    hint: '走到熔岩边，面向亮着的岩浆用水长按 E。跳到漂浮的凝固岩浆上，再跳到右岸。',
+    ground: [[0, 425, 269], [547, 425, 293]], pit: [269, 547, 'lava', 452],
+    features: [
+      feature('lavaPoint', 'first-lava', 402, 449, '岩浆', ['water'], s => {
+        surface(s, 'first-stone', 348, 441, 118, { kind: 'magmaStone', until: s.time + 9, life: 9, bob: 441 });
+        say('凝固的岩浆浮在熔岩表面。');
+      }, { autoRange: 202, radius: 90 })
+    ],
+    status: s => remaining(s, s.state.surfaces.get('first-stone')?.until, 9, '踏石')
+  },
+  {
+    id: 'v02', chapter: 'volcano', width: 846,
+    title: '热裂升流',
+    hint: '靠近发热的地缝，用水长按 E。站进蒸汽升到高台上方，向右移动。',
+    ground: [[0, 425, 439], [439, 255, 232], [671, 425, 175]],
+    features: [hotVent('first-vent', 391, 425, '热裂缝', 218, 9, 96)]
+  },
+  {
+    id: 'v03', chapter: 'volcano', width: 875,
+    title: '两根绳的次序',
+    hint: '走到熔岩边，用火长按 E 烧断近绳。松开后再长按 E 烧断远绳，等桥落稳后通过。顺序反了可以按 R 重试。',
+    ground: [[0, 425, 285], [612, 425, 263]], pit: [285, 612, 'lava', 483],
+    ropes: { left: 277, right: 620, y: 287 },
+    features: [
+      feature('rope', 'near-rope', 282, 282, '近侧绳索', ['fire'], s => {
+        s.state.near = true;
+        const { left, right, y } = s.ropes;
+        const length = right - left;
+        const drop = FLOOR - y;
+        moveBridge(s, { x: left + Math.sqrt(length ** 2 - drop ** 2), y, angle: -Math.asin(drop / length) }, .6);
+        say('近绳断了，桥板的近端落在左岸。');
+      }, { autoRange: 198, duration: .65, available: s => !s.state.near && !s.state.jammed }),
+      feature('rope', 'far-rope', 611, 273, '远侧绳索', ['fire'], s => {
+        if (!s.state.near) {
+          s.state.jammed = true;
+          moveBridge(s, { x: 477, y: 564, angle: 1.05 }, .66);
+          return say('桥卡住了。按 R 重试。', 'danger');
+        }
+        s.state.far = true;
+        moveBridge(s, { x: 620, y: FLOOR, angle: 0 }, .68, true, -.18);
+      }, { range: 426, autoRange: 405, duration: .65, available: s => !s.state.far && !s.state.jammed })
+    ],
+    update: settleBridge
+  },
+  {
+    id: 'v04', chapter: 'volcano', width: 910,
+    title: '冷泉裂石',
+    hint: '在左岸朝流动的岩浆用水长按 E，先凝出低处的一块踏石。跳上去后，再朝更高处的岩浆施水。踏石会随岩浆往下滑，边跳边凝出新的踏石。',
+    ground: [[0, 425, 290], [602, 205, 131], [733, 425, 177]], pit: [290, 602, 'lava', 495],
+    features: [
+      lavaFallPoint(1, 445, 378, 460),
+      lavaFallPoint(2, 509, 318, 407),
+      lavaFallPoint(3, 568, 252, 353)
+    ]
+  },
+  {
+    id: 'v05', chapter: 'volcano', width: 893,
+    title: '汽柱悬台',
+    hint: '用水激活热裂缝，站进蒸汽升高。向右落到本来就悬在空中的石台，再跳到右岸。',
+    ground: [[0, 425, 404], [614, 252, 128], [742, 425, 151]], pit: [404, 614, 'lava', 478],
+    init(s) { surface(s, 'suspended-ledge', 364, 255, 123, { kind: 'suspended' }); },
+    features: [hotVent('platform-vent', 338, 425, '悬台下的热裂缝', 222, 10, 79)]
+  },
+  {
+    id: 'v06', chapter: 'volcano', width: 992,
+    title: '封堵岩浆口',
+    hint: '敞开的喷口一直有岩浆喷出。用土堵住左边任意两口，跳过剩余的喷口。用水在最右口凝出踏石，跳上去，等喷流把它抬高后向右登台。',
+    ground: [[0, 425, 690], [690, 262, 137], [827, 425, 165]],
+    init: () => ({ sealed: new Set() }),
+    features: [244, 355, 466, 607].map((x, i) => feature('jet', `jet-${i}`, x, 418, '喷口', ['earth', 'water'], (s, f, el) => {
+      const sealed = s.state.sealed;
+      if (el === 'earth') {
+        if (sealed.delete(f.id)) {
+          s.state.plugUntil.delete(f.id);
+          return say('喷口重新打开了。', 'info');
+        }
+        sealed.add(f.id);
+        s.state.plugUntil.set(f.id, s.time + ELEMENT_LIFE.earth);
+        s.state.surfaces.delete(f.id);
+        return say('喷口被堵住，其他喷口的喷流变强了。');
+      }
+      if (sealed.delete(f.id)) {
+        s.state.plugUntil.delete(f.id);
+        return say('堵口的泥土被水冲散了。');
+      }
+      if (s.state.surfaces.has(f.id)) return;
+      const begins = s.time + 1.5;
+      const high = 42 + sealed.size * 55;
+      surface(s, f.id, f.x - 58, 386, 116, {
+        kind: 'magmaStone', until: begins + 5.5, life: 8, riseAt: begins, rise: high
+      });
+      say('喷口上凝出了一块岩石。');
+    }, { autoRange: 114, range: 226 }))
+  },
+  {
+    id: 'v07', chapter: 'volcano', width: 916,
+    title: '阶梯双汽',
+    hint: '对下层热裂缝施水，搭蒸汽到中层。走到中层右端，再激活第二股蒸汽登高。',
+    ground: [[0, 425, 352], [352, 295, 232], [584, 154, 162], [746, 425, 170]],
+    features: [
+      hotVent('low-vent', 305, 425, '下层热裂缝', 258, 10, 96),
+      hotVent('upper-vent', 537, 295, '中层热裂缝', 116, 10, 96)
+    ]
+  },
+  {
+    id: 'v08', chapter: 'volcano', width: 846,
+    title: '双汽孔大厅',
+    hint: '用水依次激活两个气孔，水可以反复使用。从前一道气流顶端向右跳到后一道气流，再借后一道气流跳上高台。',
+    ground: [[0, 425, 223], [258, 439, 87], [421, 439, 93], [577, 236, 116], [693, 425, 153]],
+    pit: [223, 577, 'lava', 470],
+    features: [
+      hotVent('hall-first', 303, 439, '前汽孔', 223, 12, 96, {
+        autoRange: 168, available: s => !isLiftOn(s, 'hall-first')
+      }),
+      hotVent('hall-last', 468, 439, '后汽孔', 190, 12, 102, {
+        autoRange: 308, available: s => !isLiftOn(s, 'hall-last')
+      })
+    ]
+  },
+  {
+    id: 'v09', chapter: 'volcano', width: 1075,
+    title: '熔岩绳桥',
+    hint: '用水凝出近处的踏石，再跳上悬桥。可以沿桥过河，也可以用火烧断绳索，让桥落下后再通过。跳上对岸的石台取得宝物。',
+    ground: [[0, 425, 264], [647, 425, 428]], pit: [264, 647, 'lava', 452],
+    ropes: { left: 417, right: 656, y: 349, nearY: 433, final: true },
+    features: [
+      feature('lavaPoint', 'last-lava', 369, 449, '岩浆踏石', ['water'], s => {
+        surface(s, 'last-stone', 313, 435, 117, { kind: 'magmaStone', until: s.time + 11, life: 11, bob: 435 });
+        say('踏石浮在岩浆上。');
+      }, { autoRange: 180, available: s => !s.state.bridgeDown }),
+      feature('rope', 'last-rope', 485, 264, '短桥绳索', ['fire'], s => {
+        s.state.cut = true;
+        const drop = FLOOR - s.ropes.nearY;
+        moveBridge(s, { x: 656, y: FLOOR, angle: Math.asin(drop / (s.ropes.right - s.ropes.left)) }, .72, true);
+      }, {
+        duration: .43, autoRange: 230,
+        available: s => !s.state.cut && s.state.stood && player.x - s.start >= 306
+      }),
+      feature('gem', 'treasure', 918, 324, '火山宝物', [], null)
+    ],
+    init(s) { surface(s, 'gem-pedestal', 875, 373, 86, { h: 60, kind: 'pedestal' }); },
+    update(s, p) {
+      settleBridge(s);
+      if (p.support === 'v09:last-stone') s.state.stood = true;
+    }
+  }
+];
+
+const worlds = [
+  ['jungle', jungleLevels, '丛林世界'],
+  ['ice', iceLevels, '冰雪世界'],
+  ['fire', fireLevels, '火山世界']
+];
+const levels = worlds.flatMap(([world, list]) => list.map((s, index) =>
+  Object.assign(s, { world, number: index + 1 })
+));
+let levelOffset = 0;
+for (const [index, s] of levels.entries()) {
+  s.index = index;
+  s.start = levelOffset;
+  s.end = levelOffset += s.width;
+  s.exit = s.width - 69;
+  s.ground ??= [[0, FLOOR, s.width]];
+  resetLevel(s);
+}
+const darkLevel = levels.find(s => s.darkGate);
+
+function resetLevel(s) {
+  s.time = 0;
+  s.started = false;
+  s.state = {
+    surfaces: new Map(), lifts: new Map(), fires: new Map(), plants: new Map(),
+    residue: new Map(), plugUntil: new Map(), work: new Map(), fireCount: 0, objectCount: 0
+  };
+  Object.assign(s.state, s.init?.(s));
+}
+
+function reaction(s, id, el) {
+  return s.state.work.get(`${id}:${el}`) || 0;
+}
+
+const JET_PERIOD = 4.6;
+const jetHeight = s => {
+  const pressure = 48 + s.state.sealed.size * 53;
+  const phase = Math.sin(Math.PI * Math.min(1, (s.time % JET_PERIOD) / 1.08));
+  return pressure * (.39 + phase * .61);
+};
+
+function remaining(s, until, length, label) {
+  if (!until || until <= s.time) return null;
+  const left = until - s.time;
+  return { text: `${label} ${Math.ceil(left)}s`, fraction: Math.min(1, left / length) };
+}
+
+const STEP = 1 / 120;
+const RUN = 264;
+const GRAVITY = 1250;
+const JUMP = 507;
+const HALF = 12;
+const BODY = 40;
+const RANGE = 290;
+const ELEMENT_LIFE = { fire: 5, grass: 10, earth: 20 };
+
+const keys = new Set();
+const cleared = new Set();
+const treasures = new Set();
+const effects = [];
+const player = {
+  x: 83, y: FLOOR, vx: 0, vy: 0, facing: 1, grounded: true,
+  climbing: false, jumpBuffer: 0, coyote: 0, support: '', walk: 0, liftLock: 0
+};
+
+let levelIndex = 0;
+let equipped = [];
+let activeElement = null;
+let gameTime = 0;
+let camera = 0;
+let notice = null;
+let checkpointDelay = 0;
+let finished = false;
+let paused = false;
+let controlsVersion = 0;
+let stageVersion = 0;
+let gateFeedback = -10;
+let castHeld = false;
+let channel = null;
+let travel = null;
+
+const stage = () => levels[levelIndex];
+const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+const approach = (from, to, change) => from + clamp(to - from, -change, change);
+const ease = t => t * t * (3 - 2 * t);
+const across = (x, item, pad = HALF - 3) => x + pad > item.x && x - pad < item.x + item.w;
+
+function say(text, tone = 'success', duration = 3.35) {
+  notice = { text, tone, until: gameTime + duration };
+}
+
+function arm(el) {
+  if (!elements[el] || el === activeElement) return;
+  if (!equipped.includes(el)) equipped = equipped.length < 2 ? [...equipped, el] : [activeElement, el];
+  activeElement = el;
+  channel = null;
+  controlsVersion++;
+}
+
+function swapElement() {
+  arm(equipped.find(el => el !== activeElement));
+}
+
+function setCurrent(index) {
+  levelIndex = index;
+  stage().started = true;
+  stageVersion++;
+  gateFeedback = -10;
+  notice = null;
+  stopCast();
+}
+
+function placePlayer(index) {
+  const s = levels[index];
+  resetLevel(s);
+  setCurrent(index);
+  Object.assign(player, {
+    x: s.start + 83, y: FLOOR, vx: 0, vy: 0, facing: 1,
+    grounded: true, climbing: false, jumpBuffer: 0, coyote: 0, support: '', walk: 0, liftLock: 0
+  });
+  checkpointDelay = 0;
+  camera = clamp(player.x - 296, 0, levels.at(-1).end - VIEW_W);
+  finished = false;
+  travel = null;
+  effects.length = 0;
+  keys.clear();
+}
+
+function requestJump() {
+  player.jumpBuffer = 0.125;
+}
+
+function fail(message) {
+  if (checkpointDelay) return;
+  say(message, 'danger', 2.9);
+  checkpointDelay = gameTime + 0.44;
+  player.vx = 0;
+  player.vy = 0;
+  stopCast();
+}
+
+function finishJourney() {
+  cleared.add(levelIndex);
+  finished = true;
+  player.vx = 0;
+  player.vy = 0;
+  stopCast();
+  stageVersion++;
+}
+
+function castDistance(s, f) {
+  return Math.hypot(f.x + s.start - player.x, f.y - (player.y - 22));
+}
+
+function addGroundFire(s, x, y) {
+  const old = [...s.state.fires.values()].find(item => Math.abs(item.x - x) < 31 && Math.abs(item.y - y) < 8);
+  const id = old?.id || `ember-${++s.state.fireCount}`;
+  s.state.fires.set(id, { id, x, y, born: s.time, until: s.time + ELEMENT_LIFE.fire });
+}
+
+function addGrowth(s, id, x, y, options = {}) {
+  const old = s.state.plants.get(id);
+  const plant = {
+    id, x, y, kind: 'grass', growthTime: .38,
+    born: old?.born ?? s.time, until: s.time + ELEMENT_LIFE.grass, ...options
+  };
+  s.state.plants.set(id, plant);
+  return plant;
+}
+
+function removeGrowth(s, plant, burned = false) {
+  s.state.plants.delete(plant.id);
+  if (plant.surfaceId) s.state.surfaces.delete(plant.surfaceId);
+  if (plant.flag) s.state[plant.flag] = false;
+  for (const id of plant.targets || [plant.id]) {
+    s.state.work.delete(`${id}:grass`);
+    s.state.work.delete(`${id}:water`);
+  }
+  if (burned) s.state.residue.set(`ash-${plant.id}`, {
+    kind: 'ash', x: plant.x1 ?? plant.x - 22, y: plant.y,
+    w: plant.w ?? 44, until: s.time + 4
+  });
+}
+
+function igniteGrowth(s, plant) {
+  if (plant.burnAt !== undefined) return;
+  plant.burnAt = s.time;
+  say('草木被火点燃了。');
+}
+
+function addEarthWall(s, id, x, base) {
+  s.state.work.delete(`soften-${id}:water`);
+  surface(s, id, x - 33, base - 88, 66, {
+    kind: 'earthWall', h: 88, base, wall: true, born: s.time, until: s.time + ELEMENT_LIFE.earth
+  });
+}
+
+function earthWallShape(s, item) {
+  const soft = reaction(s, `soften-${item.id}`, 'water');
+  const height = item.h * (1 - soft * .94);
+  const width = item.w * (1 + soft * .35);
+  return { ...item, x: item.x - (width - item.w) / 2, y: item.base - height, w: width, h: height };
+}
+
+function isLooseEarth(item) {
+  return item.kind === 'earthWall' || item.kind === 'looseEarth';
+}
+
+function hardenEarth(s, item) {
+  const shape = item.kind === 'earthWall' ? earthWallShape(s, item) : item;
+  surface(s, item.id, shape.x, shape.y, shape.w, {
+    kind: 'hardenedStone', h: shape.h, wall: item.wall
+  });
+  s.state.work.delete(`soften-${item.id}:water`);
+  s.state.work.delete(`harden-${item.id}:fire`);
+  if (item.id === 'avalanche-wall') s.state.reinforced = true;
+  say('松土烧成了坚实的石头。');
+}
+
+function removeLooseEarth(s, id, residue) {
+  const item = s.state.surfaces.get(id);
+  if (!item) return;
+  s.state.surfaces.delete(id);
+  s.state.work.delete(`soften-${id}:water`);
+  s.state.work.delete(`harden-${id}:fire`);
+  if (id === 'avalanche-wall') {
+    s.state.wall = false;
+    s.state.reinforced = false;
+    s.state.work.delete('avalanche-wall:earth');
+  }
+  if (residue) s.state.residue.set(`earth-${id}`, {
+    kind: residue, x: item.x, y: residue === 'mud' ? item.base ?? item.y : item.y,
+    w: item.w, born: s.time, until: s.time + (residue === 'mud' ? 2 : .55)
+  });
+}
+
+function cliffFaces(s) {
+  const faces = [];
+  for (const [left, top, width] of s.ground) {
+    for (const side of [-1, 1]) {
+      const edge = side < 0 ? left : left + width;
+      if (edge <= 0 || edge >= s.width) continue;
+      const outside = edge + side;
+      const neighbor = s.ground.find(([x, , w]) => outside >= x && outside < x + w);
+      const base = neighbor?.[1] ?? s.pit?.[3] ?? FLOOR;
+      if (base - top < 40) continue;
+      faces.push({ id: `cliff-${edge}-${side}`, x: edge + side * 11, base, top: top - 5 });
+    }
+  }
+  return faces;
+}
+
+function plantAt(s, x, y) {
+  const face = cliffFaces(s).find(item => Math.abs(item.x - x) <= 46 && Math.abs(item.base - y) < 12);
+  if (face) return addGrowth(s, face.id, face.x, face.base, {
+    kind: 'vine', top: face.top, growthTime: Math.max(.45, (face.base - face.top) / 190)
+  });
+  const existing = [...s.state.plants.values()].find(item => item.kind === 'grass' && Math.abs(item.x - x) < 30 && Math.abs(item.y - y) < 8);
+  addGrowth(s, existing?.id || `grass-${++s.state.objectCount}`, x, y);
+}
+
+function plantTarget(s, plant) {
+  let x = plant.x;
+  let y = plant.y - 13;
+  if (plant.kind === 'bridge') {
+    x = clamp(player.x - s.start + player.facing * 47, plant.x1, plant.x1 + plant.w);
+    y = plant.y - plant.arc * Math.sin(Math.PI * (x - plant.x1) / plant.w);
+  } else if (plant.kind === 'vine') {
+    y = clamp(player.y - 23, vineTip(s, plant), plant.y - 10);
+  }
+  const accepts = plant.kind === 'bridge' ? ['fire'] : ['fire', 'water'];
+  return feature('livingGrass', plant.id, x, y, '草木', accepts, (region, f, el) => {
+    if (el === 'water') waterPlant(region, plant, player.facing);
+    else igniteGrowth(region, plant);
+  }, { duration: .48, autoRange: 126, radius: 38, available: region => region.state.plants.has(plant.id) && plant.burnAt === undefined });
+}
+
+function growthProgress(s, plant) {
+  return plant.growthTime ? ease(clamp((s.time - plant.born) / plant.growthTime, 0, 1)) : 1;
+}
+
+function vineTip(s, plant) {
+  return plant.y - (plant.y - plant.top) * growthProgress(s, plant);
+}
+
+function worldTargets(s) {
+  const features = s.features.filter(f => f.cast && (!f.available || f.available(s)))
+    .map(f => f.point ? { ...f, ...f.point(s, player) } : f);
+  for (const fire of s.state.fires.values()) {
+    features.push(feature('groundFire', fire.id, fire.x, fire.y - 10, '地面火团', ['water'], (region, f) => {
+      region.state.fires.delete(f.id);
+      lift(region, { ...f, y: fire.y - 5 }, fire.y - 168, 8.5, 101);
+      say('水遇到火，变成了上升的蒸汽。');
+    }, { autoRange: 141, duration: .72, available: region => region.state.fires.has(fire.id) }));
+  }
+  for (const plant of s.state.plants.values()) if (plant.burnAt === undefined) features.push(plantTarget(s, plant));
+  for (const item of s.state.surfaces.values()) {
+    if (!isLooseEarth(item)) continue;
+    const x = item.x + item.w / 2;
+    const y = item.y + Math.min(41, item.h / 2);
+    const available = region => region.state.surfaces.get(item.id) === item;
+    features.push(
+      feature('hardenEarth', `harden-${item.id}`, x, y, '松土', ['fire'], region => {
+        hardenEarth(region, item);
+      }, { duration: .72, persistent: true, autoRange: 224, radius: 64, available }),
+      feature('softEarth', `soften-${item.id}`, x, y, '松土', ['water'], region => {
+        removeLooseEarth(region, item.id, 'mud');
+        say('松土被水冲散了。');
+      }, { duration: .95, persistent: true, autoRange: 154, available })
+    );
+  }
+  for (const face of cliffFaces(s)) {
+    features.push(feature('cliff', face.id, face.x,
+      clamp(player.y - 23, face.top + 11, face.base - 11), '崖壁', ['grass'], region => {
+        addGrowth(region, face.id, face.x, face.base, {
+          kind: 'vine', top: face.top, growthTime: Math.max(.45, (face.base - face.top) / 190)
+        });
+      }, { duration: .73, autoRange: 137, range: RANGE, radius: 54 }));
+  }
+  return features;
+}
+
+function autoTarget(s) {
+  let target = null;
+  let best = Infinity;
+  for (const f of worldTargets(s)) {
+    if (!f.accepts.includes(activeElement)) continue;
+    const dx = f.x + s.start - player.x;
+    if (dx * player.facing < -50) continue;
+    const distance = castDistance(s, f);
+    if (distance <= (f.autoRange || 156) && distance < best) {
+      best = distance;
+      target = f;
+    }
+  }
+  return target;
+}
+
+function targetAt(s, x, y) {
+  let found = null;
+  let best = Infinity;
+  for (const f of worldTargets(s)) {
+    if (!f.accepts.includes(activeElement)) continue;
+    const distance = Math.hypot(f.x + s.start - x, f.y - y);
+    const radius = f.radius || (f.kind === 'gate' || f.kind === 'drift' || f.kind === 'icicles' ? 94 : 53);
+    if (distance < radius && distance < best && castDistance(s, f) <= (f.range || RANGE)) {
+      found = f;
+      best = distance;
+    }
+  }
+  return found;
+}
+
+function freeCast(s, point) {
+  const local = player.x - s.start;
+  const rawX = point ? point.x - s.start : local + player.facing * 70;
+  const rawY = point?.y ?? player.y - 6;
+  const scale = Math.min(1, RANGE / Math.max(1, Math.hypot(rawX - local, rawY - player.y + 22)));
+  const x = clamp(local + (rawX - local) * scale, 7, s.width - 7);
+  const y = player.y - 22 + (rawY - player.y + 22) * scale;
+  const floor = s.ground.find(([a, b, w]) => x >= a + 3 && x < a + w - 3 && Math.abs(b - y) < 97);
+  const blocked = floor && s.blocks?.(s).some(item => x > item.x && x < item.x + item.w && item.y < floor[1] - 5);
+  if (floor && !blocked && ELEMENT_LIFE[activeElement]) {
+    const el = activeElement;
+    const name = `terrain-${el}`;
+    return feature('groundElement', name, x, floor[1] - 7, '', [el], (region, f) => {
+      if (el === 'fire') addGroundFire(region, f.x, floor[1]);
+      if (el === 'grass') plantAt(region, f.x, floor[1]);
+      if (el === 'earth') {
+        const inWall = Math.abs(player.x - region.start - f.x) < 47 && player.y > floor[1] - 88;
+        if (inWall) return;
+        const old = [...region.state.surfaces.values()].find(item => item.kind === 'earthWall' && Math.abs(item.x + item.w / 2 - f.x) < 30 && item.base === floor[1]);
+        addEarthWall(region, old?.id || `earth-${++region.state.objectCount}`, f.x, floor[1]);
+      }
+    }, { duration: el === 'earth' ? .83 : .66 });
+  }
+  return feature('air', 'air', x, y, '', [activeElement], () => {}, { duration: .52 });
+}
+
+function startCast(point = null) {
+  if (castHeld || paused || finished || checkpointDelay) return false;
+  castHeld = true;
+  if (!activeElement) {
+    say('按 1–4 选择要释放的元素。', 'info', 2);
+    return false;
+  }
+  const s = stage();
+  const aim = point || { x: player.x + player.facing * 70, y: player.y - 6 };
+  const target = (point ? targetAt(s, point.x, point.y) : autoTarget(s)) ||
+    jungleWaterTarget(s, aim.x, aim.y) || freeCast(s, point);
+  const stored = target.persistent ? reaction(s, target.id, activeElement) : 0;
+  channel = { s, target, el: activeElement, startedAt: gameTime, t: stored < 1 ? stored : 0, duration: target.duration || .63 };
+  return true;
+}
+
+function stopCast() {
+  channel = null;
+  castHeld = false;
+}
+
+function updateCast(s, dt) {
+  if (!channel || channel.s !== s) return;
+  const { target: f, el } = channel;
+  if (castDistance(s, f) > (f.range || RANGE) + 18 || (f.available && !f.available(s))) {
+    channel = null;
+    return;
+  }
+  if (f.kind === 'groundFire' && !s.state.fires.has(f.id)) {
+    channel = null;
+    return;
+  }
+  channel.t = clamp(channel.t + dt / channel.duration, 0, 1);
+  if (f.persistent) s.state.work.set(`${f.id}:${el}`, channel.t);
+  if (channel.t < 1) return;
+  channel = null;
+  effects.push({ time: gameTime, x: s.start + f.x, y: f.y, el });
+  f.cast(s, f, el);
+}
+
+function movingSurfaces(s, dt) {
+  if (s.ropes && !s.state.bridgeDown) syncRopeBridge(s);
+  for (const [id, item] of s.state.surfaces) {
+    if (item.until && s.time >= item.until) {
+      if (isLooseEarth(item)) removeLooseEarth(s, id);
+      else s.state.surfaces.delete(id);
+      continue;
+    }
+    const oldX = item.x;
+    const oldY = item.y;
+    if (item.drift) {
+      const { distance, period } = item.drift;
+      item.x += distance * .5 * (Math.cos((s.time - dt) / period * 2 * Math.PI) -
+        Math.cos(s.time / period * 2 * Math.PI));
+    }
+    if (item.bob) item.y = item.bob + Math.sin(s.time * 4.6) * 1.5;
+    if (item.flow) {
+      item.x += item.flow.dx * dt;
+      item.y += item.flow.dy * dt;
+    }
+    if (item.riseAt !== undefined && s.time >= item.riseAt) {
+      const progress = clamp((s.time - item.riseAt) / 0.68, 0, 1);
+      item.y = 386 - item.rise * ease(progress);
+    }
+    if (player.support === `${s.id}:${id}`) {
+      player.x += item.x - oldX;
+      player.y += item.y - oldY;
+    }
+  }
+  for (const [id, column] of s.state.lifts) if (s.time > column.until) s.state.lifts.delete(id);
+  for (const [id, fire] of s.state.fires) if (s.time > fire.until) s.state.fires.delete(id);
+  for (const plant of s.state.plants.values()) {
+    if (plant.burnAt === undefined) {
+      const touchedFire = [...s.state.fires.values()].some(fire => {
+        const left = plant.x1 ?? plant.x - 22;
+        const right = plant.x1 === undefined ? plant.x + 22 : plant.x1 + plant.w;
+        return fire.x >= left - 9 && fire.x <= right + 9 && Math.abs(fire.y - plant.y) < 27;
+      });
+      if (touchedFire) igniteGrowth(s, plant);
+    }
+    if (plant.burnAt !== undefined && s.time - plant.burnAt >= .72) removeGrowth(s, plant, true);
+    else if (s.time >= plant.until) removeGrowth(s, plant);
+  }
+  for (const [id, residue] of s.state.residue) if (s.time >= residue.until) s.state.residue.delete(id);
+  for (const [id, until] of s.state.plugUntil) if (s.time >= until) {
+    s.state.plugUntil.delete(id);
+    s.state.sealed.delete(id);
+  }
+}
+
+function collisionSurfaces(s) {
+  const solids = [];
+  for (let n = Math.max(0, levelIndex - 1); n <= Math.min(levels.length - 1, levelIndex + 1); n++) {
+    const region = levels[n];
+    const offset = region.start - s.start;
+    for (const [x, y, w] of region.ground)
+      solids.push({ x: x + offset, y, w, h: VIEW_H + 60 - y, wall: true });
+    for (const item of region.blocks?.(region) || [])
+      solids.push({ ...item, x: item.x + offset, wall: true });
+    for (const item of region.state.surfaces.values()) {
+      const shape = item.kind === 'earthWall' ? earthWallShape(region, item) : item;
+      const plant = item.kind === 'vineBridge' ? region.state.plants.get(item.id) : null;
+      const progress = plant ? growthProgress(region, plant) : 1;
+      if (progress * shape.w < 2) continue;
+      const start = shape.x + offset;
+      solids.push({ ...shape, x: start + (plant?.fromRight ? shape.w * (1 - progress) : 0),
+        w: shape.w * progress, curveX: start, curveW: shape.w, id: `${region.id}:${item.id}`,
+        loose: isLooseEarth(item) ? { region, id: item.id } : undefined });
+    }
+  }
+  return solids;
+}
+
+function platformY(item, x) {
+  const t = clamp((x - (item.curveX ?? item.x)) / (item.curveW ?? item.w), 0, 1);
+  return item.y + (item.ramp || 0) * t - (item.arc || 0) * Math.sin(Math.PI * t);
+}
+
+function collectTreasure(s) {
+  const gem = s.features.find(f => f.kind === 'gem');
+  if (!gem || treasures.has(s.world)) return;
+  if (Math.abs(player.x - s.start - gem.x) >= 35 || Math.abs(player.y - 22 - gem.y) >= 32) return;
+  treasures.add(s.world);
+  effects.push({ time: gameTime, x: s.start + gem.x, y: gem.y,
+    el: s.world === 'jungle' ? 'grass' : s.world === 'ice' ? 'water' : 'fire', pickup: true });
+  if (s.world === 'fire') finishJourney();
+  else say(`获得${gem.name}`);
+}
+
+function chamberOpacity() {
+  const entry = ease(clamp((player.x - darkLevel.start + 265) / 302, 0, 1));
+  const exit = darkLevel.state.litAt === undefined ? 1
+    : 1 - ease(clamp((player.x - darkLevel.end + 98) / 335, 0, 1));
+  const light = darkLevel.state.litAt === undefined ? 0
+    : ease(clamp((gameTime - darkLevel.state.litAt) / .86, 0, 1));
+  const away = 1 - ease(clamp((player.x - darkLevel.end - 145) / 145, 0, 1));
+  return (.9 - .6 * light) * entry * exit * away;
+}
+
+function beginTravel(kind) {
+  travel = { kind, at: gameTime, duration: kind === 'volcano' ? 1.42 : 1.02 };
+  if (kind === 'cave') say('进入冰洞。', 'info', 2.1);
+  if (kind === 'surface') say('借蒸汽回到了雪原地面。', 'info', 2.6);
+  if (kind === 'volcano') say('进入火山世界。', 'info', 2.4);
+}
+
+function advance(dt) {
+  if (paused || finished) return;
+  gameTime += dt;
+  while (effects.length && gameTime - effects[0].time > 0.83) effects.shift();
+  if (travel && gameTime - travel.at > travel.duration) travel = null;
+
+  if (checkpointDelay) {
+    if (gameTime >= checkpointDelay) {
+      const message = notice?.text;
+      placePlayer(levelIndex);
+      say(message || '回到本关起点。', 'danger', 2.2);
+    }
+    return;
+  }
+
+  const s = stage();
+  for (const region of levels) if (region === s || region.started) {
+    region.time += dt;
+    movingSurfaces(region, dt);
+  }
+  updateCast(s, dt);
+  const local = player.x - s.start;
+  const halted = s.id === 'i14' && s.time < (s.state.stopUntil || 0);
+  const right = keys.has('d') || keys.has('arrowright');
+  const left = keys.has('a') || keys.has('arrowleft');
+  const up = keys.has('w') || keys.has('arrowup');
+  const axis = halted ? 0 : Number(right) - Number(left);
+  if (axis) player.facing = axis;
+  const power = windPower(s);
+  const desired = axis * RUN * (axis > 0 ? 1 - power : 1);
+  player.vx = approach(player.vx, desired, (player.grounded ? 2150 : 1550) * dt);
+  if (halted) player.vx = 0;
+  const wind = axis > 0 ? 0 : -91 * power;
+  player.walk += Math.abs(player.vx) * dt * 0.068;
+
+  const solids = collisionSurfaces(s);
+  let x = local + (player.vx + wind) * dt;
+  if (s.id === 'i03' && wind && axis === 0) x = Math.max(0, x);
+  for (const block of solids) {
+    if (!block.wall || player.y <= block.y + 5 || player.y - BODY >= block.y + block.h) continue;
+    if (local + HALF <= block.x + 4 && x + HALF > block.x) {
+      x = Math.min(x, block.x - HALF);
+      player.vx = Math.min(player.vx, 0);
+    } else if (local - HALF >= block.x + block.w - 4 && x - HALF < block.x + block.w) {
+      x = Math.max(x, block.x + block.w + HALF);
+      player.vx = Math.max(player.vx, 0);
+    }
+  }
+
+  if (s.darkGate && s.state.litAt === undefined && x > s.exit - 13) {
+    x = s.exit - 13;
+    player.vx = 0;
+    if (axis > 0 && gameTime > gateFeedback + 2) {
+      gateFeedback = gameTime;
+      say('冰洞出口还关着。', 'info', 1.9);
+    }
+  }
+  if (s.treasureExit && !treasures.has(s.world) && x > s.width - 13) {
+    x = s.width - 13;
+    player.vx = Math.min(player.vx, 0);
+  }
+  player.x = clamp(s.start + x, 18, levels.at(-1).end - 22);
+  x = player.x - s.start;
+
+  player.coyote = player.grounded ? 0.1 : Math.max(0, player.coyote - dt);
+  player.jumpBuffer = Math.max(0, player.jumpBuffer - dt);
+  player.liftLock = Math.max(0, player.liftLock - dt);
+  const vine = [...s.state.plants.values()].find(item => item.kind === 'vine' &&
+    item.burnAt === undefined && Math.abs(x - item.x) < 30 && player.y >= vineTip(s, item) - 14 && player.y <= item.y + 14);
+  const climbing = vine && (up || player.climbing);
+  const column = !player.liftLock && [...s.state.lifts.values()].find(item => Math.abs(x - item.x) < item.width / 2 &&
+    player.y <= item.y + 14 && player.y >= item.top - 7);
+  const liftTop = column && player.y <= column.top + 11;
+  const jumping = !halted && player.jumpBuffer > 0 && (player.coyote > 0 || player.climbing || liftTop) && !(up && vine);
+  const beforeY = player.y;
+  const wasGrounded = player.grounded;
+  player.grounded = false;
+  player.support = '';
+
+  if (climbing && !jumping) {
+    player.climbing = true;
+    player.vy = 0;
+    if (up) player.y = Math.max(vineTip(s, vine), player.y - 192 * dt);
+  } else {
+    player.climbing = false;
+    if (jumping) {
+      player.vy = liftTop ? -JUMP * .86 : -JUMP;
+      if (liftTop) player.liftLock = .22;
+      player.coyote = 0;
+      player.jumpBuffer = 0;
+    }
+    const riding = column && !player.liftLock;
+    if (riding) {
+      player.vy = approach(player.vy, -305, dt * 1970);
+      player.y = Math.max(column.top, player.y + player.vy * dt);
+      if (player.y <= column.top) player.vy = 0;
+    } else {
+      player.vy = Math.min(725, player.vy + GRAVITY * dt);
+      player.y += player.vy * dt;
+    }
+
+    let landing = null;
+    let top = Infinity;
+    for (const item of solids) {
+      if (!across(x, item)) continue;
+      const y = platformY(item, x);
+      const crossed = player.vy >= 0 && beforeY <= y + 3 && player.y >= y;
+      const walkingUp = wasGrounded && !jumping && !riding && beforeY >= y && beforeY - y <= 10;
+      const walkingDown = wasGrounded && !jumping && !riding && y - beforeY > 0 && y - beforeY <= 4 && (item.arc || item.ramp);
+      if ((crossed || walkingUp || walkingDown) && y < top) {
+        if (item.loose) {
+          removeLooseEarth(item.loose.region, item.loose.id, 'crumbles');
+          continue;
+        }
+        if (item.thorns) return fail('踩进荆棘了，回到本关起点。');
+        top = y;
+        landing = item;
+      }
+    }
+    if (landing) {
+      player.y = top;
+      player.vy = 0;
+      player.grounded = true;
+      player.support = landing.id || 'ground';
+    }
+  }
+
+  s.update?.(s, player);
+  collectTreasure(s);
+  if (checkpointDelay || finished) return;
+  if (s.pit?.[2] === 'lava' && x > s.pit[0] + 4 && x < s.pit[1] - 4 && player.y > s.pit[3] + 4)
+    return fail('落进岩浆了，回到本关起点。');
+  if (player.y > VIEW_H + 28) return fail('掉下去了，回到本关起点。');
+
+  if (s.id === 'v06') {
+    for (const vent of s.features) {
+      if (s.state.sealed.has(vent.id) || player.support === `${s.id}:${vent.id}`) continue;
+      const stone = s.state.surfaces.get(vent.id);
+      const height = Math.min(jetHeight(s), stone ? FLOOR - stone.y - 3 : Infinity);
+      if (Math.abs(x - vent.x) < 16 && player.y > FLOOR - height + 3 && player.y - BODY < FLOOR)
+        return fail('碰到喷发的岩浆了，回到本关起点。');
+    }
+  }
+
+  if (player.x >= s.end && levelIndex < levels.length - 1) {
+    cleared.add(levelIndex);
+    setCurrent(levelIndex + 1);
+    if (s.transition) beginTravel(s.transition);
+  } else if (player.x < s.start && levelIndex > 0) {
+    setCurrent(levelIndex - 1);
+  }
+}
+
+function followCamera(dt) {
+  const target = clamp(player.x - 334, 0, levels.at(-1).end - VIEW_W);
+  camera += (target - camera) * (1 - Math.exp(-7.2 * dt));
+  if (Math.abs(target - camera) < 0.08) camera = target;
+}
+
+const canvas = document.querySelector('#game');
+const ctx = canvas.getContext('2d', { alpha: false });
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let dpr = 1;
+let renderTime = 0;
+
+const palettes = {
+  jungle: {
+    sky: ['#83b9a0', '#b9d8b1', '#e7ebbc'],
+    far: '#99c4a9', flank: '#6ea591', cap: '#cfe2b9', hills: '#5a9280', tree: '#387763',
+    earth: ['#657f60', '#495f4e', '#2c453e'], rim: '#b3d488', edge: '#527758', line: '#afd59e',
+    pit: ['#4f8883', '#1e494c']
+  },
+  snow: {
+    sky: ['#99d1de', '#d6eef0', '#edf8f0'],
+    far: '#b6dbe3', flank: '#97c5d1', cap: '#edf9f7', hills: '#78b0bc', tree: '#4d9194',
+    earth: ['#c3e6e9', '#9bc6d3', '#79abbf'], rim: '#f2fffb', edge: '#6da5b8', line: '#e2f5f4',
+    pit: ['#4b8da6', '#193f60']
+  },
+  cave: {
+    sky: ['#122c40', '#244d65', '#37738a'],
+    far: '#245168', flank: '#22455f', cap: '#3f7587', hills: '#203e57', tree: '#438397',
+    earth: ['#76b4c6', '#4f8aa2', '#315b76'], rim: '#c6f5f4', edge: '#61a6b9', line: '#9ed2d9',
+    pit: ['#1b4a67', '#0b273e']
+  },
+  ridge: {
+    sky: ['#a8c9e8', '#e2f0f0', '#f4f7ee'],
+    far: '#bfdbe5', flank: '#9dbdcc', cap: '#f4fbf7', hills: '#83acbf', tree: '#4a8492',
+    earth: ['#c5e4ea', '#a8c8da', '#7c9fb8'], rim: '#f4ffff', edge: '#7ca6bb', line: '#e4f3f7',
+    pit: ['#629cb9', '#335372']
+  },
+  volcano: {
+    sky: ['#2c2331', '#563544', '#974e44'],
+    far: '#69404c', flank: '#4a3342', cap: '#a86a66', hills: '#352832', tree: '#6e484b',
+    earth: ['#54404a', '#392f3a', '#29242f'], rim: '#a98279', edge: '#211b26', line: '#816168',
+    pit: ['#843e38', '#311e28']
+  }
+};
+
+const hash = n => {
+  const value = Math.sin(n * 41.745 + 5.22) * 43758.5453123;
+  return value - Math.floor(value);
+};
+const wrap = (x, n) => ((x % n) + n) % n;
+
+function poly(points, fill, stroke, width = 1) {
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (const [x, y] of points.slice(1)) ctx.lineTo(x, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = width; ctx.stroke(); }
+}
+
+function line(points, stroke, width = 1) {
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (const [x, y] of points.slice(1)) ctx.lineTo(x, y);
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function oval(x, y, rx, ry, fill, angle = 0) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, Math.max(.05, rx), Math.max(.05, ry), angle, 0, Math.PI * 2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+function box(x, y, w, h, radius, fill, border) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (border) { ctx.strokeStyle = border; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+function shade(y1, y2, ...colors) {
+  const grad = ctx.createLinearGradient(0, y1, 0, y2);
+  colors.forEach((color, i) => grad.addColorStop(i / (colors.length - 1), color));
+  return grad;
+}
+
+function glow(x, y, radius, center, edge = center.slice(0, 7) + '00') {
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+  grad.addColorStop(0, center);
+  grad.addColorStop(1, edge);
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+}
+
+function blend(a, b, t) {
+  const c = [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t));
+  return `rgb(${c.join(',')})`;
+}
+
+const boundaries = levels.filter((s, i) => i === 0 || s.chapter !== levels[i - 1].chapter);
+function landscapeColors(x) {
+  let prev = boundaries[0];
+  for (const next of boundaries.slice(1)) {
+    const extent = next.chapter === 'volcano' ? 430 : 260;
+    if (x < next.start - extent) break;
+    if (x < next.start + extent) {
+      const weight = ease((x - next.start + extent) / (2 * extent));
+      const a = palettes[prev.chapter], b = palettes[next.chapter];
+      const colors = {};
+      for (const key of ['far', 'flank', 'cap', 'hills', 'tree'])
+        colors[key] = blend(a[key], b[key], weight);
+      colors.sky = a.sky.map((color, i) => blend(color, b.sky[i], weight));
+      return { colors, warm: (Number(prev.chapter === 'volcano') * (1 - weight) + Number(next.chapter === 'volcano') * weight),
+        jungle: Number(prev.chapter === 'jungle') * (1 - weight) + Number(next.chapter === 'jungle') * weight,
+        cave: (Number(prev.chapter === 'cave') * (1 - weight) + Number(next.chapter === 'cave') * weight) };
+    }
+    prev = next;
+  }
+  return { colors: palettes[prev.chapter], warm: Number(prev.chapter === 'volcano'), jungle: Number(prev.chapter === 'jungle'), cave: Number(prev.chapter === 'cave') };
+}
+
+function mountains(colors, warm, scroll, stride, foot, height, distant) {
+  const start = Math.floor(scroll / stride) - 1;
+  for (let i = start; i < start + Math.ceil(VIEW_W / stride) + 4; i++) {
+    const salt = i + (distant ? 73 : 451);
+    const x = i * stride - scroll;
+    const mid = x + stride * (.52 + hash(salt + 6) * .25);
+    const top = foot - height * (.59 + hash(salt + 3) * .55);
+    const right = x + stride * (1.18 + hash(salt + 2) * .38);
+    poly([[x - 39, foot], [mid, top], [right, foot]], distant ? colors.far : colors.hills);
+    poly([[mid, top], [right, foot], [mid + 21, foot]], distant ? colors.flank : colors.far);
+    if (warm < .94) {
+      const width = (right - x) * .19;
+      const low = top + height * .28;
+      ctx.save();
+      ctx.globalAlpha = 1 - warm;
+      poly([[mid, top], [mid + width * .66, low - 2], [mid + width * .22, low - 14], [mid + width * .02, low],
+        [mid - width * .19, low - 11], [mid - width * .65, low + 6]], colors.cap);
+      ctx.restore();
+    } else if (!distant && i % 3 === 0) {
+      line([[mid + 3, top + 9], [mid + 18, top + 48], [mid + 30, top + 62], [mid + 35, top + 93]], '#c56f5d66', 2);
+    }
+  }
+}
+
+function spruce(x, y, h, color, cool) {
+  const w = h * .34;
+  poly([[x - 3, y], [x - 2, y - h * .55], [x + 3, y - h * .6], [x + 4, y]], color);
+  poly([[x, y - h], [x + w * .68, y - h * .42], [x + w * .36, y - h * .48],
+    [x + w, y - 5], [x - w, y - 5], [x - w * .38, y - h * .49], [x - w * .67, y - h * .42]], color);
+  poly([[x, y - h], [x - w * .67, y - h * .42], [x - w * .36, y - h * .48], [x - w, y - 5],
+    [x + 2, y - h * .18]], cool ? '#ddf7f025' : '#f8b49418');
+}
+
+function background() {
+  const { colors, warm, cave, jungle } = landscapeColors(camera + VIEW_W * .44);
+  ctx.fillStyle = shade(0, VIEW_H, ...colors.sky);
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  const lightX = 828 - wrap(camera * .085, 450);
+  glow(lightX, warm > .5 ? 309 : 133, 194, warm > .5 ? '#f6aa6d59' : '#fcffeaab');
+  if (cave < .78) {
+    ctx.save();
+    ctx.globalAlpha = (1 - cave) * .8;
+    oval(lightX, warm > .5 ? 234 : 133, warm > .5 ? 32 : 41, warm > .5 ? 32 : 41, warm > .5 ? '#fbb48670' : '#fff9e9b5');
+    ctx.restore();
+  }
+  mountains(colors, warm, camera * .20 + 148, 292, 406, 235, true);
+  mountains(colors, warm, camera * .38 + 90, 325, 441, 146, false);
+  const front = camera * .65;
+  const start = Math.floor(front / 102) - 1;
+  for (let i = start; i < start + 14; i++) {
+    const x = i * 102 - front + hash(i + 5) * 49;
+    const y = 427 + hash(i + 18) * 17;
+    const h = 27 + hash(i + 16) * 72;
+    if (jungle > .5) {
+      const trunk = 58 + h * 1.36;
+      const crown = 29 + hash(i + 13) * 34;
+      poly([[x - 13, y], [x - 4, y - trunk], [x + 4, y - trunk], [x + 10, y]], colors.tree);
+      line([[x, y - trunk * .56], [x - crown * .65, y - trunk * .84]], colors.tree, 6);
+      oval(x - crown * .47, y - trunk * .89, crown * .75, crown * .40, colors.hills, -.25);
+      oval(x + crown * .34, y - trunk, crown, crown * .48, colors.tree, .12);
+      oval(x + crown * .18, y - trunk - 12, crown * .83, crown * .36, colors.flank, -.12);
+    } else if (warm < .45 && cave < .57) spruce(x, y, h, colors.tree, true);
+    else {
+      const w = 12 + hash(i + 34) * 23;
+      poly([[x - w, y], [x - w * .75, y - h * .47], [x + w * .18, y - h],
+        [x + w * .82, y - h * .27], [x + w, y]], colors.flank);
+      poly([[x + w * .18, y - h], [x + w * .82, y - h * .27], [x + w, y], [x + 2, y]], colors.tree);
+    }
+  }
+
+  const caveOpacity = Math.min(1, cave * 1.44);
+  if (caveOpacity > 0.02) {
+    ctx.save();
+    ctx.globalAlpha = caveOpacity;
+    const step = 53;
+    const offset = camera * .8;
+    const first = Math.floor(offset / step) - 1;
+    const teeth = [[-20, -10]];
+    for (let i = first; i < first + 25; i++) {
+      const x = i * step - offset;
+      const y = 24 + hash(i + 8) * 23;
+      teeth.push([x, y], [x + 9 + hash(i + 29) * 29, y + 19 + hash(i + 38) * 95], [x + step, y - 2]);
+    }
+    teeth.push([VIEW_W + 30, -10]);
+    poly(teeth, shade(0, 160, '#122a3d', '#478398'), '#72a9b544', 1);
+    ctx.restore();
+  }
+
+  const drift = reducedMotion ? 0 : renderTime;
+  for (let i = 0; i < 66; i++) {
+    const x = wrap(i * 137.37 + hash(i) * 87 - camera * (.05 + hash(i + 82) * .19) + drift * (warm > .5 ? 7 : -8) * (1 + hash(i + 23)), VIEW_W);
+    const y = wrap(i * 53.26 + drift * (warm > .5 ? -10 : 9) * (1 + hash(i + 17)), 429);
+    const r = .65 + hash(i + 4) * 1.72;
+    const color = warm > .5 ? (i % 3 ? '#ffaf795c' : '#ffce9ec0') : (i % 6 ? '#f5fffa8e' : '#ffffffd0');
+    oval(x, y, r, r, color);
+    if (i % 19 === 0 && warm < .3) {
+      line([[x - 4, y], [x + 4, y]], '#effffff5', .9);
+      line([[x, y - 4], [x, y + 4]], '#effffff5', .9);
+    }
+  }
+}
+
+function terrain(s, palette) {
+  for (const [x, y, w] of s.ground) {
+    const fire = s.world === 'fire';
+    ctx.fillStyle = shade(y, VIEW_H + 12, ...palette.earth);
+    ctx.fillRect(x, y, w + .5, VIEW_H + 14 - y);
+    poly([[x, y + 12], [x + w * .32, y + 24], [x + w * .57, y + 13],
+      [x + w, y + 32], [x + w, y + 56], [x, y + 30]], fire ? '#d4907320' : '#e1fcfa44');
+    poly([[x, y + 51], [x + w * .42, y + 62], [x + w * .63, y + 49], [x + w, y + 70],
+      [x + w, y + 88], [x, y + 69]], fire ? '#0d152239' : '#6aa4bc31');
+    ctx.fillStyle = palette.rim;
+    ctx.fillRect(x, y, w + .5, fire ? 5 : 6);
+    ctx.fillStyle = palette.edge;
+    ctx.fillRect(x, y + (fire ? 5 : 6), w + .5, 2);
+    if (x > 0 || y < FLOOR) {
+      poly([[x, y], [x + 20, y + 9], [x + 12, y + (VIEW_H - y) * .64], [x + 32, VIEW_H], [x, VIEW_H]],
+        fire ? '#251a294c' : '#b8e8e941');
+    }
+    for (let i = 0; i < Math.floor(w / 39); i++) {
+      const salt = i + x + s.index * 37;
+      const px = x + 18 + i * 38 + hash(salt + 38) * 12;
+      const py = y + 16 + hash(salt + 7) * 76;
+      const length = 4 + hash(salt + 93) * 25;
+      if (i % 3 === 0)
+        line([[px, py], [px + length * .4, py + 3], [px + length * .63, py + 2], [px + length, py + 8]], fire ? '#d5a18a39' : '#eefcff70');
+      else
+        poly([[px, py], [px + 3, py - 4], [px + 11, py + 2], [px + 2, py + 6]], fire ? '#a3766e24' : '#d4f4f650');
+    }
+  }
+  if (s.id === 'i15') {
+    const melt = ctx.createLinearGradient(265, 0, s.width, 0);
+    melt.addColorStop(0, '#51404b00');
+    melt.addColorStop(.66, '#655662ab');
+    melt.addColorStop(1, '#51404af4');
+    ctx.fillStyle = melt;
+    ctx.fillRect(265, FLOOR, s.width - 265, VIEW_H - FLOOR + 1);
+    const rim = ctx.createLinearGradient(265, 0, s.width, 0);
+    rim.addColorStop(0, '#a9827900');
+    rim.addColorStop(1, '#a98279');
+    ctx.fillStyle = rim;
+    ctx.fillRect(265, FLOOR, s.width - 265, 5);
+  }
+}
+
+function pit(s, palette) {
+  if (!s.pit) return;
+  const [left, right, type, lavaY] = s.pit;
+  const width = right - left;
+  ctx.fillStyle = shade(FLOOR - 9, VIEW_H, ...palette.pit);
+  ctx.fillRect(left, FLOOR, width, VIEW_H - FLOOR + 10);
+  if (type === 'creek') {
+    for (let i = 0; i < 19; i++) {
+      const x = left + wrap(i * 67 + (reducedMotion ? 0 : renderTime * (6 + i % 4)), width - 28);
+      const y = FLOOR + 49 + hash(i + s.index) * 51;
+      line([[x, y], [x + 11, y - 1], [x + 28, y]], i % 3 ? '#a3e4c866' : '#d1efe495', 1.4);
+    }
+    return;
+  }
+  if (type === 'ice') {
+    for (let i = 0; i < 9; i++) {
+      const x = left + 8 + i * (width - 8) / 9;
+      poly([[x, VIEW_H], [x + 12, 471 + hash(i + s.index) * 36], [x + 29, VIEW_H]],
+        i % 2 ? '#99dbe549' : '#c2f5f15c');
+    }
+    return;
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(left, lavaY - 23, width, VIEW_H - lavaY + 24);
+  ctx.clip();
+  glow((left + right) / 2, lavaY + 17, width * .52, '#ff90436b');
+  ctx.beginPath();
+  ctx.moveTo(left, lavaY);
+  for (let i = 0; i <= width + 6; i += 6)
+    ctx.lineTo(left + i, lavaY + Math.sin(i * .057 + renderTime * 3.2) * 2.8 + Math.sin(i * .021 - renderTime * 2.4) * 1.5);
+  ctx.lineTo(right + 3, VIEW_H);
+  ctx.lineTo(left, VIEW_H);
+  ctx.closePath();
+  ctx.fillStyle = shade(lavaY, VIEW_H, '#ffd082', '#f17e49', '#ae4242');
+  ctx.fill();
+  for (let i = 0; i < width / 13; i++) {
+    const offset = wrap(i * 37 + renderTime * (12 + hash(i) * 13), width);
+    const y = lavaY + 5 + hash(i + s.index) * 44;
+    line([[left + offset, y], [left + offset + 8 + hash(i + 8) * 23, y + 1]],
+      i % 2 ? '#ffdd9a9c' : '#a9363b53', i % 3 === 0 ? 2 : 1);
+  }
+  ctx.restore();
+}
+
+function crystal(x, y, size, angle, dim = false) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  poly([[0, 0], [-size * .27, -size * .61], [0, -size], [size * .30, -size * .69], [size * .19, 0]],
+    dim ? '#5b9fb7' : '#90d6de', dim ? '#88c6d6' : '#e2ffff', .8);
+  poly([[0, 0], [0, -size], [size * .30, -size * .69], [size * .19, 0]], dim ? '#396b8b' : '#5eafc6');
+  line([[0, -size * .79], [-size * .12, -size * .54]], '#e5fefba3', 1.4);
+  ctx.restore();
+}
+
+function groundDecor(s) {
+  const salt = s.index * 31;
+  for (const [x, y, w] of s.ground) {
+    if (w < 100) continue;
+    for (let i = 0; i < Math.floor(w / 148); i++) {
+      const px = x + 42 + i * 150 + hash(salt + i) * 38;
+      if (s.features.some(f => Math.abs(f.x - px) < 63)) continue;
+      if (s.world === 'jungle') {
+        for (const direction of [-1, 1]) {
+          line([[px, y], [px + direction * 10, y - 11], [px + direction * 21, y - 15]], '#477650', 2);
+          leaf(px + direction * 13, y - 12, 11, direction * -.56, '#8fbf78');
+          leaf(px + direction * 8, y - 9, 9, direction * .68, '#b0cd85');
+        }
+      } else if (s.world === 'fire') {
+        oval(px, y - 1, 18, 4, '#211c2e6b');
+        poly([[px - 12, y], [px - 8, y - 11], [px + 1, y - 18], [px + 12, y - 9], [px + 16, y]], '#574451', '#966b6b67', 1);
+        line([[px + 1, y - 14], [px - 2, y - 6], [px + 5, y - 4]], '#bb766465', 1);
+      } else if ((i + s.index) % 3 === 1 || s.chapter === 'cave') {
+        crystal(px - 7, y + 1, 18, -.24, s.chapter === 'cave');
+        crystal(px + 5, y + 1, 29, .18, s.chapter === 'cave');
+      } else {
+        oval(px, y + 1, 18, 2.7, '#85b6c54d');
+        poly([[px - 15, y], [px - 5, y - 8], [px + 3, y - 10], [px + 15, y]], '#edf9f5', '#92bfca84', 1);
+      }
+    }
+  }
+}
+
+function leaf(x, y, w, angle, tint = '#80cda5') {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(w * .38, -w * .36, w, 0);
+  ctx.quadraticCurveTo(w * .45, w * .4, 0, 0);
+  ctx.fillStyle = tint;
+  ctx.fill();
+  ctx.strokeStyle = '#337c6b';
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+  line([[w * .12, 0], [w * .78, 0]], '#def1b87d', 1);
+  ctx.restore();
+}
+
+
+function drawVine(s) {
+  if (!s.vine || s.state.grown) return;
+  const { x, top, base, target } = s.vine;
+  const progress = s.state.grown ? 1 : reaction(s, target, 'grass');
+  if (progress < .025) return;
+  const end = base - (base - top + 16) * progress;
+  const pts = [];
+  for (let y = base; y >= end; y -= 5) pts.push([x + Math.sin(y * .092) * 8, y]);
+  pts.push([x + Math.sin(end * .092) * 8, end]);
+  line(pts, '#235b57', 12);
+  line(pts, '#83c598', 5);
+  for (let y = base - 18, i = 0; y > end + 3; y -= 21, i++)
+    leaf(x, y, 24 + i % 3 * 4, i % 2 ? -.66 : -2.48);
+  if (progress < 1) leaf(pts.at(-1)[0], end, 13, -1.33, '#a6e0aa');
+}
+
+function plantArt(s, plant) {
+  const grow = growthProgress(s, plant);
+  const burn = plant.burnAt === undefined ? 0 : clamp((s.time - plant.burnAt) / .72, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (plant.until - s.time) / .65) * (1 - burn * .65);
+  if (burn) ctx.filter = `saturate(${1 - burn}) brightness(${1 - burn * .65})`;
+  if (plant.kind === 'bridge') {
+    vineSpan({ x: plant.x1, y: plant.y, w: plant.w, arc: plant.arc },
+      plant.fromRight ? 1 - grow : 0, plant.fromRight ? 1 : grow);
+  } else if (plant.kind === 'vine') {
+    const tip = vineTip(s, plant);
+    const points = [];
+    for (let y = plant.y; y > tip; y -= 5) points.push([plant.x + Math.sin(y * .092) * 7, y]);
+    points.push([plant.x + Math.sin(tip * .092) * 7, tip]);
+    if (points.length > 1) {
+      line(points, '#255d50', 10);
+      line(points.map(([x, y]) => [x + 1, y]), '#83c598', 4);
+    }
+    for (let y = plant.y - 15, i = 0; y > tip + 3; y -= 22, i++)
+      leaf(plant.x, y, 23 + i % 3 * 4, i % 2 ? -.66 : -2.48);
+    leaf(plant.x, tip, 13, -1.33, '#a6e0aa');
+  } else {
+    ctx.translate(plant.x, plant.y);
+    ctx.scale(.38 + grow * .62, .08 + grow * .92);
+    oval(0, 1, 21, 3, '#3c74524a');
+    for (let i = 0; i < 7; i++) {
+      const base = (i - 3) * 4.1;
+      const height = 12 + hash(i + plant.x) * 13;
+      ctx.beginPath();
+      ctx.moveTo(base, 1);
+      ctx.quadraticCurveTo(base + (i % 2 ? 7 : -6), -height * .68, base + (i % 2 ? 10 : -9), -height);
+      ctx.quadraticCurveTo(base + (i % 2 ? 2 : -1), -height * .62, base + 1, 1);
+      ctx.fillStyle = i % 2 ? '#6fbc83' : '#438f66';
+      ctx.fill();
+    }
+    leaf(-6, -12, 13, -2.4, '#9bd694');
+    leaf(5, -9, 13, -.65, '#8dcb8b');
+  }
+  ctx.restore();
+  if (burn) {
+    const x = plant.x;
+    glow(x, plant.y - 17, 36, '#ffad5d7b');
+    flame(x - 10, plant.y - 6, 18 + (1 - burn) * 13, x);
+    flame(x + 10, plant.y - 5, 16 + (1 - burn) * 10, x + 5);
+    for (let i = 0; i < 7; i++) {
+      const p = wrap(renderTime * .76 + i / 7, 1);
+      oval(x + (hash(i) - .5) * 28 + Math.sin(p * 4) * 7, plant.y - p * 52, 2 + p * 3, 3 + p * 3, '#57555b79');
+    }
+  }
+}
+
+function residueArt(s, item) {
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (item.until - s.time) / .65);
+  if (item.kind === 'crumbles') {
+    const age = s.time - item.born;
+    for (let i = 0; i < 13; i++) {
+      const x = item.x + hash(i + item.x) * item.w + (hash(i + 17) - .5) * age * 65;
+      const y = item.y + hash(i + 23) * 10 + age * age * (120 + 205 * hash(i + 5));
+      poly([[x - 3, y], [x + 1, y - 4], [x + 5, y + 1], [x, y + 4]], '#b59376', '#725a50', 1);
+    }
+  } else if (item.kind === 'mud') {
+    oval(item.x + item.w / 2, item.y, item.w / 2, 3.4, '#8b7775a8');
+    line([[item.x + 13, item.y], [item.x + item.w - 14, item.y - 1]], '#a7b6b7bd', 1.4);
+  } else {
+    oval(item.x + item.w / 2, item.y, item.w / 2, 2.7, '#424751a0');
+    for (let i = 0; i < Math.ceil(item.w / 9); i++) {
+      const x = item.x + hash(i + item.x) * item.w;
+      const y = item.y - hash(i + item.y) * 3;
+      poly([[x - 3, y], [x, y - 3 - hash(i) * 4], [x + 4, y]], i % 2 ? '#4c4e58' : '#757781');
+    }
+  }
+  ctx.restore();
+}
+
+function earthWallArt(s, item) {
+  const shape = earthWallShape(s, item);
+  const x = shape.x + shape.w / 2;
+  const soft = reaction(s, `soften-${item.id}`, 'water');
+  const heat = reaction(s, `harden-${item.id}`, 'fire');
+  const grow = ease(clamp((s.time - item.born) / .20, 0, 1));
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (item.until - s.time) / .6);
+  ctx.translate(x, item.base);
+  ctx.scale(shape.w / 66, shape.h / 88 * grow);
+  ctx.translate(-x, -FLOOR);
+  const top = FLOOR - 88;
+  oval(x, FLOOR, 43, 4.2, '#4f5a5847');
+  poly([[x - 33, FLOOR], [x - 33, top + 14], [x - 4, top], [x + 33, top + 14], [x + 33, FLOOR]],
+    shade(top, FLOOR, blend('#bea487', '#9d9490', soft), blend('#8b7268', '#706c70', soft)), '#6b6164', 1.8);
+  poly([[x - 33, top + 14], [x - 4, top], [x + 33, top + 14], [x + 2, top + 27]], blend('#e0bf98', '#b1afab', soft));
+  line([[x + 3, top + 30], [x + 17, top + 44], [x + 9, top + 54], [x + 21, top + 65]],
+    blend('#ac8a77', '#ffd29a', heat), 2);
+  line([[x - 25, top + 53], [x - 15, top + 61], [x - 18, top + 73]], '#76615d91', 1.7);
+  ctx.restore();
+}
+
+function vineSpan(item, low, high) {
+  const left = item.x + item.w * low, right = item.x + item.w * high;
+  if (right - left < 2) return;
+  const shape = [];
+  for (let x = left; x < right; x += 4) shape.push([x, platformY(item, x)]);
+  shape.push([right, platformY(item, right)]);
+  line(shape, '#225b54', 15);
+  line(shape.map(([x, y]) => [x, y - 3]), '#73bd90', 5.5);
+  let index = 0;
+  for (let x = left + 14; x < right - 8; x += 31, index++)
+    leaf(x, platformY(item, x), 19 + index % 3 * 3, index % 2 ? -.77 : -2.35, index % 2 ? '#91cd9e' : '#6ebd93');
+}
+
+function growingBridge(s) {
+  const b = s.bridge;
+  if (!b || s.state.surfaces.has(b.id)) return;
+  const progress = reaction(s, b.target, b.el);
+  if (progress <= 0) return;
+  const item = { x: b.x, w: b.w, y: FLOOR, arc: b.arc };
+  const t = ease(progress);
+  vineSpan(item, 0, b.both ? t / 2 : t);
+  if (b.both) vineSpan(item, 1 - t / 2, 1);
+}
+
+function postArt(x) {
+  oval(x, FLOOR + 1, 13, 3, '#496f7c53');
+  poly([[x - 6, FLOOR], [x - 7, FLOOR - 29], [x - 1, FLOOR - 33],
+    [x + 6, FLOOR - 30], [x + 7, FLOOR]], '#a3826e', '#645b63', 1.6);
+  line([[x - 5, FLOOR - 20], [x + 5, FLOOR - 20], [x + 7, FLOOR - 16], [x - 5, FLOOR - 16]], '#e7cc9f', 2);
+  line([[x - 3, FLOOR - 28], [x - 2, FLOOR - 22]], '#d3ae87', 1.4);
+}
+
+function platformArt(item, s) {
+  const left = item.x, right = item.x + item.w;
+  if (item.kind === 'earthWall') {
+    earthWallArt(s, item);
+    return;
+  }
+  if (item.kind === 'vineBridge') {
+    if (s.state.plants.has(item.id)) return;
+    vineSpan(item, 0, 1);
+    return;
+  }
+  if (item.kind === 'plank') {
+    const a = platformY(item, left), b = platformY(item, right);
+    poly([[left, a], [right, b], [right, b + 14], [left, a + 14]], '#a9856b', '#534148', 2);
+    line([[left, a + 2], [right, b + 2]], '#e0c19b', 3);
+    for (let x = left + 13; x < right; x += 22) {
+      const y = platformY(item, x);
+      line([[x, y + 3], [x, y + 13]], '#594550', 1.5);
+    }
+    return;
+  }
+  if (item.kind === 'looseEarth' || item.kind === 'hardenedStone') {
+    const y = item.y, h = item.h;
+    const stone = item.kind === 'hardenedStone';
+    const heat = stone ? 0 : reaction(s, `harden-${item.id}`, 'fire');
+    poly([[left, y + 5], [left + 8, y], [right - 8, y], [right, y + 5],
+      [right - 5, y + h], [left + 7, y + h]], stone ? '#596b78' : '#9c785d', stone ? '#31404e' : '#654d42', 2);
+    line([[left + 8, y + 2], [right - 8, y + 2]], stone ? '#bfdae4' : blend('#dfb892', '#ffd08a', heat), 2.5);
+    for (let i = 0; i < h / 15; i++) {
+      const py = y + 8 + i * 13;
+      line([[left + 9, py], [left + item.w * .42, py + 3], [left + item.w * .65, py],
+        [right - 7, py + 3]], stone ? '#8a9eaa' : '#735341', 1.4);
+    }
+    return;
+  }
+  const y = item.y;
+  const duration = item.until ? item.until - s.time : 100;
+  ctx.save();
+  if (duration < 1.6 && !reducedMotion) ctx.globalAlpha = .74 + Math.sin(s.time * 22) * .22;
+  if (item.kind === 'magmaStone') {
+    const shape = [[left, y + 8], [left + 11, y + 2], [left + item.w * .42, y],
+      [right - 13, y + 2], [right, y + 8], [right - 12, y + 22], [left + 16, y + 21]];
+    glow((left + right) / 2, y + 12, 48, '#ff6e4451');
+    poly(shape, shade(y, y + 23, '#a34c46', '#663038', '#56272e'), '#451f31', 2);
+    poly([shape[0], shape[1], shape[2], shape[3], shape[4], [right - 23, y + 12], [left + 20, y + 11]], '#b15a51');
+    line([[left + 10, y + 5], [left + 32, y + 2], [left + 51, y + 3]], '#f3a171', 1.8);
+    line([[left + 42, y + 5], [left + 53, y + 10], [left + 61, y + 8], [left + 68, y + 15], [left + 86, y + 17]], '#ffae76', 1.8);
+    line([[right - 30, y + 4], [right - 23, y + 10], [right - 14, y + 13]], '#e97055', 1.6);
+    ctx.restore();
+    return;
+  }
+  if (item.kind === 'suspended') {
+    for (const x of [left + 13, right - 13]) {
+      line([[x, y - 100], [x, y + 2]], '#4a3945', 4);
+      ctx.save();
+      ctx.setLineDash([3, 6]);
+      line([[x, y - 99], [x, y + 1]], '#b18778', 2);
+      ctx.restore();
+    }
+  }
+  const depth = item.kind === 'pedestal' ? 56 : item.kind === 'suspended' ? 26 : 18;
+  poly([[left + 7, y], [right - 7, y], [right, y + 7], [right - 14, y + depth],
+    [left + 14, y + depth - 2], [left, y + 8]], '#6d6471', '#2b2938', 2);
+  poly([[left + 7, y + 1], [right - 8, y + 1], [right, y + 7], [left + 17, y + 11], [left + 1, y + 8]],
+    item.kind === 'pedestal' ? '#b88e83' : '#a4b5b7');
+  line([[left + 8, y + 2], [right - 8, y + 2]], item.kind === 'pedestal' ? '#f3b996' : '#cbe9e5', 2);
+  line([[left + 31, y + 8], [left + 41, y + 13], [left + 52, y + 9], [left + 65, y + 13]], '#e59f797c', 1.5);
+  if (item.until) {
+    ctx.fillStyle = '#eee2ca9b';
+    ctx.fillRect(left + 13, y + 13, (item.w - 26) * Math.min(1, duration / (item.life || 8)), 1.5);
+  }
+  ctx.restore();
+}
+
+function flame(x, y, size, phase = 0) {
+  const lean = reducedMotion ? 0 : Math.sin(renderTime * 10 + phase) * size * .1;
+  ctx.beginPath();
+  ctx.moveTo(x + lean, y - size);
+  ctx.bezierCurveTo(x + size * .16, y - size * .55, x + size * .55, y - size * .31, x + size * .34, y);
+  ctx.bezierCurveTo(x + size * .20, y + size * .38, x - size * .5, y + size * .20, x - size * .36, y - size * .25);
+  ctx.quadraticCurveTo(x - size * .29, y - size * .49, x + lean, y - size);
+  ctx.fillStyle = shade(y - size, y + size * .3, '#ff8251', '#f5a55d', '#e8724a');
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x + lean * .35, y - size * .64);
+  ctx.quadraticCurveTo(x + size * .36, y + size * .13, x, y + size * .11);
+  ctx.quadraticCurveTo(x - size * .28, y + size * .10, x + lean * .35, y - size * .64);
+  ctx.fillStyle = '#fff4b1';
+  ctx.fill();
+}
+
+function streamArt(column, s) {
+  const { x, top, y, width } = column;
+  const height = y - top + 32;
+  const mid = top + height * .55;
+  ctx.save();
+  const haze = ctx.createLinearGradient(x - width * .52, 0, x + width * .52, 0);
+  haze.addColorStop(0, '#c7f8f500');
+  haze.addColorStop(.25, '#c7f8f53b');
+  haze.addColorStop(.5, '#edfffa80');
+  haze.addColorStop(.75, '#c7f8f53b');
+  haze.addColorStop(1, '#c7f8f500');
+  ctx.fillStyle = haze;
+  ctx.fillRect(x - width * .52, top - 21, width * 1.04, height);
+  for (let i = 0; i < 22; i++) {
+    const wave = reducedMotion ? i / 22 : wrap(renderTime * (.46 + hash(i) * .55) + i / 22, 1);
+    const px = x + (hash(i + 7) - .5) * (width - 14) + Math.sin(wave * 9 + i) * 7;
+    const py = y - wave * height;
+    ctx.globalAlpha = Math.min(1, (1 - wave) * 2);
+    oval(px, py, 2.8 + hash(i + 35) * 6, 4 + hash(i + 10) * 13, '#edffff73', .3);
+  }
+  ctx.globalAlpha = .55;
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x + i * 15, y - 5);
+    ctx.bezierCurveTo(x + i * 18 - 9, mid, x + i * 18 + 8, mid, x + i * 17, top + 3);
+    ctx.strokeStyle = '#e7ffffb8';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function snowDrift(s, f) {
+  const p = s.state.melted ? 1 : reaction(s, f.id, 'fire');
+  if (p > 0) {
+    const size = 18 + p * 53;
+    oval(f.x, 424, size, 2 + 3 * p, '#6cacc5a0');
+    line([[f.x - size * .64, 423], [f.x + size * .58, 423]], '#d6fcfcbd', 1.5);
+  }
+  if (s.state.melted) return;
+  ctx.save();
+  ctx.translate(f.x, FLOOR);
+  ctx.scale(1 - p * .44, 1 - p * .94);
+  ctx.translate(-f.x, -FLOOR);
+  oval(f.x, 425, 79, 6, '#588cab4f');
+  ctx.beginPath();
+  ctx.moveTo(f.x - 76, 425);
+  ctx.bezierCurveTo(f.x - 67, 401, f.x - 68, 366, f.x - 38, 365);
+  ctx.bezierCurveTo(f.x - 25, 324, f.x - 8, 301, f.x + 7, 307);
+  ctx.bezierCurveTo(f.x + 28, 312, f.x + 23, 348, f.x + 44, 354);
+  ctx.bezierCurveTo(f.x + 68, 363, f.x + 65, 397, f.x + 78, 425);
+  ctx.closePath();
+  ctx.fillStyle = shade(300, 427, '#f9fff7', '#e2f6f3', '#acd3df');
+  ctx.fill();
+  ctx.strokeStyle = '#7ab3c2';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  line([[f.x - 46, 391], [f.x - 31, 378], [f.x - 17, 381], [f.x - 6, 375]], '#9fcbd7', 2.5);
+  line([[f.x + 6, 345], [f.x + 16, 355], [f.x + 29, 360]], '#f4fffb', 3.2);
+  line([[f.x + 32, 406], [f.x + 42, 401], [f.x + 52, 403]], '#93c3cf', 2);
+  ctx.restore();
+}
+
+
+function rootArt(s, f) {
+  const x = f.x;
+  const grew = f.id === 'left-seed' ? s.state.leftSeed : f.id === 'right-seed' ? s.state.rightSeed : s.state.grown;
+  poly([[x - 17, FLOOR], [x - 10, FLOOR - 5], [x + 3, FLOOR - 7],
+    [x + 14, FLOOR - 3], [x + 19, FLOOR]], '#788c77', '#81a6a0', 1);
+  if (grew && f.kind === 'shoreRoot' && !s.state.plants.has(f.id)) {
+    line([[x, FLOOR], [x - 2, FLOOR - 13], [x + 2, FLOOR - 21]], '#41896e', 3.7);
+    leaf(x, FLOOR - 17, 17, -.73);
+    leaf(x - 2, FLOOR - 12, 16, -2.49);
+  }
+}
+
+function wallArt(s, f) {
+  const building = channel?.s === s && channel.target.id === f.id ? channel : null;
+  if (!building || s.state.surfaces.has(f.id)) return;
+  ctx.save();
+  ctx.translate(0, FLOOR);
+  ctx.scale(1, .08 + ease(building.t) * .92);
+  ctx.translate(0, -FLOOR);
+  earthWallArt(s, {
+    id: f.id, x: building.target.x - 33, w: 66, h: 88,
+    base: FLOOR, born: s.time - .2, until: s.time + ELEMENT_LIFE.earth
+  });
+  ctx.restore();
+}
+
+function gateArt(s, f) {
+  const x = f.x, y = FLOOR - 158;
+  const amount = s.state.open ? 1 : reaction(s, f.id, 'fire');
+  poly([[x - 114, FLOOR], [x - 100, 285], [x - 82, 189], [x - 35, 163],
+    [s.width, 139], [s.width, FLOOR]], shade(149, FLOOR, '#476b83', '#57869b', '#497c92'), '#47798f', 1.2);
+  poly([[x - 102, 267], [x - 82, 190], [x - 35, 163], [s.width, 139], [s.width, 193],
+    [x - 36, 191], [x - 57, 218], [x - 72, 213]], '#d9f3efb7');
+  box(x - 77, y, 154, 158, [43, 43, 1, 1], shade(y, 425, '#3a6a85', '#2b526d'), '#244b63');
+  box(x - 63, y + 13, 126, 145, [32, 32, 1, 1], shade(y, 425, '#84bccd', '#4c819d'));
+  box(x - 51, y + 25, 102, 133, [28, 28, 1, 1], shade(y, 425, '#142638', '#1f4058', '#527f8f'), '#b8e7e5');
+  if (amount < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - amount * .78;
+    ctx.translate(0, FLOOR);
+    ctx.scale(1, 1 - amount * .82);
+    ctx.translate(0, -FLOOR);
+    box(x - 50, y + 25, 100, 133, [26, 26, 1, 1], shade(y, 425, '#d8f7f6', '#94cadf'), '#f0ffffc5');
+    line([[x - 17, y + 39], [x - 8, y + 77], [x - 18, y + 98], [x + 1, y + 140]], '#74aabd', 2.4);
+    line([[x + 22, y + 38], [x + 14, y + 72], [x + 25, y + 91]], '#f1fffdce', 3);
+    line([[x - 9, y + 77], [x - 34, y + 93]], '#f1fffdaf', 2);
+    ctx.restore();
+  }
+  if (amount > .12) oval(x, FLOOR, 40 * amount, 3, '#a5e6e39e');
+}
+
+function icicleArt(s, f) {
+  if (s.state.melted) {
+    oval(f.x, 424, 69, 4, '#80c5dc77');
+    return;
+  }
+  const x = f.x;
+  const base = 145;
+  const p = reaction(s, f.id, 'fire');
+  const fall = s.state.dropAt === undefined ? 0 : 1380 * Math.pow(s.time - s.state.dropAt, 2);
+  const pts = [[x - 118, base], [x + 116, base]];
+  ctx.save();
+  ctx.translate(x, base + fall);
+  ctx.scale(1 - p * .13, 1 - p * .93);
+  ctx.translate(-x, -base);
+  for (let i = 8; i >= 0; i--) {
+    const pos = x - 106 + i * 25;
+    const tip = i === 4 || i === 5 ? 414 - i * 2 : 231 + hash(i + 3) * 155;
+    pts.push([pos + 13, base + 18], [pos + 8, tip], [pos - 11, base + 16]);
+  }
+  poly(pts, shade(base, 390, '#528faa', '#a5dbe4', '#e2fcf7'), '#b2e3eab8', 2);
+  for (let i = 0; i < 8; i++) {
+    const pos = x - 99 + i * 25;
+    line([[pos + 2, base + 6], [pos + 6, 200 + hash(i + 9) * 66]], '#e1fff5a6', 2);
+  }
+  ctx.restore();
+  if (p > 0) {
+    for (let i = 0; i < 7; i++) {
+      const fall = wrap(renderTime * 2.8 + hash(i), 1);
+      oval(x - 85 + i * 28, 340 + fall * 80, 1.4, 3.6, '#c9f6f3a0');
+    }
+  }
+}
+
+function torchArt(s, f) {
+  const lit = s.state[f.id] || reaction(s, f.id, 'fire') > .35;
+  if (lit) {
+    glow(f.x, f.y, 132, '#ffc47651');
+    glow(f.x, f.y - 10, 49, '#ffb86480');
+  }
+  oval(f.x, 425, 16, 4, '#132d4a8f');
+  box(f.x - 4, f.y + 4, 8, FLOOR - f.y - 4, 2, '#685a60', '#4a4a60');
+  poly([[f.x - 11, f.y - 8], [f.x + 11, f.y - 8], [f.x + 6, f.y + 12], [f.x - 5, f.y + 12]], '#937a6b', '#3e4c63', 2);
+  line([[f.x - 9, f.y - 4], [f.x + 8, f.y - 4]], '#c2a28b', 2);
+  if (lit) flame(f.x, f.y - 9, 26, f.x);
+}
+
+function ventArt(s, f) {
+  const x = f.x, y = f.y + 5;
+  const ice = f.kind === 'well';
+  const heated = s.state.heated || !ice;
+  const on = isLiftOn(s, f.id);
+  const sealed = s.state.sealed?.has(f.id);
+  const w = ice ? 66 : f.kind === 'jet' ? 48 : 60;
+  if (heated && !sealed) glow(x, y - 1, 43, '#ff9e6578');
+  oval(x, y, w * .62, 5, ice ? '#2c668399' : '#21192590');
+  poly([[x - w / 2, y], [x - w * .33, y - 9], [x + w * .29, y - 9], [x + w / 2, y]],
+    ice ? '#67a6bf' : '#63505a', ice ? '#caeefa' : '#a1746e', 2);
+  line([[x - w * .34, y - 2], [x - 11, y - 5], [x + 6, y - 2], [x + w * .34, y - 5]],
+    sealed ? '#8c7165' : on ? '#e0fff0' : heated ? '#ff9f64' : '#add9ef', 2);
+  if (sealed) {
+    poly([[x - 18, y - 2], [x - 10, y - 15], [x + 6, y - 17], [x + 18, y - 3]],
+      '#a88a72', '#5a4649', 1.5);
+    line([[x - 9, y - 13], [x + 5, y - 15]], '#ddc29a', 2);
+  }
+}
+
+function jetArt(s, f) {
+  const stone = s.state.surfaces.get(f.id);
+  const lifting = stone && s.time >= stone.riseAt && s.time <= stone.riseAt + 1;
+  if (s.state.sealed.has(f.id)) return;
+  const x = f.x, bottom = f.y + 5;
+  const peak = stone ? (lifting ? bottom - stone.y : Math.min(jetHeight(s), bottom - stone.y)) : jetHeight(s);
+  const top = bottom - peak;
+  glow(x, bottom - peak * .28, peak * .71, '#ff875142');
+  ctx.beginPath();
+  ctx.moveTo(x - 14, bottom);
+  ctx.quadraticCurveTo(x - 12, top + 37, x + 2, top);
+  ctx.quadraticCurveTo(x + 18, top + 37, x + 14, bottom);
+  ctx.closePath();
+  ctx.fillStyle = shade(top, bottom, '#ffe6a68c', '#fb9a61e8', '#e46a4eea');
+  ctx.fill();
+  line([[x + 1, bottom - 1], [x - 3, top + 32], [x + 2, top + 7]], '#fff0b4a6', 2.8);
+}
+
+
+function lavaWallArt() {
+  const cliff = [[602, 205], [576, 248], [551, 282], [529, 318], [483, 350],
+    [453, 376], [429, 421], [409, 476], [553, 495], [602, 493]];
+  poly(cliff, shade(200, 491, '#68464f', '#42333f'), '#94716f', 1.5);
+  poly([[602, 207], [576, 249], [551, 282], [582, 287], [602, 251]], '#ad746c60');
+  poly([[549, 284], [529, 318], [483, 350], [536, 365], [575, 294]], '#9d665c3e');
+  poly([[483, 350], [453, 376], [429, 421], [409, 476], [514, 454], [551, 395]], '#9d665c55');
+  const stream = [[610, 196], [584, 229], [568, 252], [545, 283], [509, 318], [473, 344],
+    [445, 378], [431, 417], [412, 469], [403, 494]];
+  for (const [x, y] of stream) glow(x, y, 32, '#fc875b44');
+  line(stream, '#9c423e', 23);
+  line(stream, shade(200, 495, '#fca670', '#fb8157', '#e76a4d'), 15);
+  line(stream.map(([x, y]) => [x + 2.4, y]), '#ffc27ab9', 4.1);
+  for (let i = 0; i < 22; i++) {
+    const position = wrap((reducedMotion ? 0 : renderTime * .83) + i * .68, stream.length - 1);
+    const from = stream[Math.floor(position)], to = stream[Math.floor(position) + 1];
+    const t = position % 1;
+    const x = from[0] + (to[0] - from[0]) * t + (hash(i) - .5) * 9;
+    const y = from[1] + (to[1] - from[1]) * t;
+    line([[x + 3, y - 6], [x - 2, y + 3]], i % 3 ? '#ffe19cd4' : '#f75e4d', 1.65);
+  }
+}
+
+function ropeArt(s) {
+  const { left, right, final } = s.ropes;
+  const pose = ropePose(s);
+  const length = right - left;
+  const a = { x: pose.x - length * Math.cos(pose.angle), y: pose.y - length * Math.sin(pose.angle) };
+  const b = { x: pose.x, y: pose.y };
+  const overhead = 144;
+  line([[left - 16, overhead], [right + 18, overhead]], '#59464f', 8);
+  line([[left - 16, overhead - 3], [right + 18, overhead - 3]], '#a78179', 1.7);
+  if (final) {
+    const hook = left + 68;
+    if (!s.state.cut) line([[hook, overhead + 3], [a.x + 69, a.y + 3]], '#e5c59d', 2.4);
+    else line([[hook, overhead + 3], [hook + 1, overhead + 30]], '#ac8572', 1.8);
+  } else {
+    if (!s.state.near) line([[left + 5, overhead + 3], [a.x + 5, a.y + 3]], '#e5c59d', 2.5);
+    else line([[left + 5, overhead + 3], [left + 6, overhead + 32]], '#ac8572', 1.8);
+    if (!s.state.far && !s.state.jammed) line([[right - 9, overhead + 3], [b.x - 9, b.y + 3]], '#e5c59d', 2.5);
+    else line([[right - 9, overhead + 3], [right - 7, overhead + 31]], '#ac8572', 1.8);
+  }
+  if (s.state.surfaces.has('rope-bridge')) return;
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(pose.angle);
+  platformArt({ x: 0, y: 0, w: length, kind: 'plank' }, s);
+  ctx.restore();
+}
+
+function gemArt(s, f) {
+  if (treasures.has(s.world)) return;
+  const [halo, core, light, dark] = s.world === 'jungle' ? ['#8de594', '#65ce8d', '#e0ffbf', '#3f876b']
+    : s.world === 'ice' ? ['#8be7fc', '#64badb', '#daffff', '#457ba9']
+    : ['#ffac6a', '#f27666', '#ffd7a8', '#b94a53'];
+  const x = f.x, y = f.y + (reducedMotion ? 0 : Math.sin(renderTime * 2.7) * 5);
+  glow(x, y, 82, `${halo}6b`);
+  glow(x, y, 44, `${core}66`);
+  poly([[x, y - 23], [x + 20, y - 8], [x + 16, y + 14], [x, y + 26],
+    [x - 17, y + 13], [x - 20, y - 8]], core, light, 2.1);
+  poly([[x, y - 23], [x + 20, y - 8], [x + 5, y + 3], [x - 19, y - 8]], light);
+  poly([[x + 5, y + 3], [x + 20, y - 8], [x + 16, y + 14], [x, y + 26]], dark);
+  poly([[x - 20, y - 8], [x + 5, y + 3], [x, y + 26], [x - 17, y + 13]], blend(core, dark, .23));
+  line([[x - 8, y - 14], [x - 1, y - 18]], '#fff8e7', 2.5);
+  for (let i = 0; i < 4; i++) {
+    const angle = i * Math.PI / 2 + renderTime * .62;
+    const px = x + Math.cos(angle) * (35 + i * 1.5);
+    const py = y + Math.sin(angle) * (31 + i * 1.5);
+    poly([[px, py - 4], [px + 3, py], [px, py + 4], [px - 3, py]], `${light}c4`);
+  }
+}
+
+
+function jungleBrambleArt(s, f) {
+  if (!f.available(s)) return;
+  const remaining = 1 - reaction(s, f.id, 'fire') * .6;
+  const count = Math.max(9, Math.ceil(f.w / 11));
+  for (let i = 0; i < count; i++) {
+    const end = FLOOR - f.height * (.68 + hash(i + 3) * .32) * remaining;
+    const x = f.x - f.w / 2 + f.w * i / (count - 1);
+    const bend = (hash(i + 7) - .5) * (f.w > 52 ? 42 : 52);
+    line([[x, FLOOR], [x - bend, (FLOOR + end) / 2], [x + bend, end]],
+      i % 2 ? '#705543' : '#493f38', 5);
+    leaf(x + bend, end + 11, 8, bend * .04, '#a18460');
+  }
+}
+
+function junglePoolArt(s) {
+  for (const [left, right, floor] of s.pools || []) {
+    oval((left + right) / 2, floor - 1, (right - left) / 2 + 5, 11, '#335d57');
+    oval((left + right) / 2, floor - 3, (right - left) / 2, 8, '#7cbaba');
+    for (let i = 0; i < 5; i++) {
+      const x = left + wrap(i * 33 + (reducedMotion ? 0 : renderTime * 8), right - left - 17);
+      line([[x, floor - 4], [x + 13, floor - 4]], '#c1eddaaf', 1.3);
+    }
+  }
+}
+
+function jungleBankArt(s) {
+  const [left, right, floor] = s.vineBank;
+  for (const [edge, side] of [[left, 1], [right, -1]]) {
+    const root = [[edge - side * 35, floor], [edge - side * 16, floor - 9],
+      [edge - side * 3, floor - 6], [edge + side * 13, floor + 9]];
+    line(root, '#375e49', 4);
+    leaf(edge - side * 13, floor - 10, 13, -side * .7);
+    leaf(edge - side * 24, floor - 5, 9, side * .6, '#a4cd85');
+  }
+}
+
+function jungleGateArt(s) {
+  const x = 851;
+  const y = 267;
+  glow(x, y - 59, 102, '#b8fbd28b');
+  poly([[x - 48, y], [x - 44, y - 88], [x - 25, y - 117], [x + 26, y - 117],
+    [x + 46, y - 90], [x + 49, y], [x + 30, y], [x + 27, y - 75],
+    [x + 13, y - 93], [x - 13, y - 93], [x - 28, y - 75], [x - 30, y]],
+  '#48655a', '#29473f', 3);
+  line([[x - 43, y - 24], [x - 38, y - 83], [x - 22, y - 109],
+    [x + 21, y - 109], [x + 40, y - 83]], '#a1be8c', 4);
+}
+
+function featureArt(s, f) {
+  switch (f.kind) {
+    case 'bramble': jungleBrambleArt(s, f); break;
+    case 'drift': snowDrift(s, f); break;
+    case 'root':
+    case 'shoreRoot': rootArt(s, f); break;
+    case 'windWall':
+    case 'snowWall': wallArt(s, f); break;
+    case 'gate': gateArt(s, f); break;
+    case 'icicles': icicleArt(s, f); break;
+    case 'torch': torchArt(s, f); break;
+    case 'well':
+    case 'vent':
+    case 'jet': ventArt(s, f); break;
+    case 'gem': gemArt(s, f); break;
+  }
+}
+
+function weatherArt(s) {
+  if (s.id === 'i03') {
+    const power = windPower(s);
+    const wall = s.state.wall;
+    const open = s.state.deflected < 2 && s.time >= s.state.calmUntil;
+    if (!open && wall && s.time - wall.time < .35) {
+      const t = (s.time - wall.time) / .35;
+      for (let i = 0; i < 15; i++)
+        oval(wall.x + 27 + t * (18 + hash(i) * 50), 290 + hash(i + 3) * 121 - t * 37,
+          2 + hash(i + 8) * 5 * (1 - t), 1.4 + hash(i) * 2, '#f1fffcdf');
+    }
+    if (!open) return;
+    const speed = reducedMotion ? 0 : 43 + power * 253;
+    const count = 9 + Math.floor(power * 22);
+    for (let i = 0; i < count; i++) {
+      const x = 45 + wrap(i * 151 - renderTime * speed * (1 + hash(i) * .45), s.width - 110);
+      const y = 140 + hash(i + 9) * 269;
+      const length = 16 + hash(i + 5) * (28 + power * 100);
+      ctx.beginPath();
+      ctx.moveTo(x + length, y - 7);
+      ctx.quadraticCurveTo(x + length * .56, y + 3, x, y);
+      ctx.strokeStyle = power > .56 ? '#f7ffffec' : '#ecffffa6';
+      ctx.lineWidth = 1.2 + power * 1.8;
+      ctx.stroke();
+    }
+  }
+  if (s.id === 'i14' && s.state.rollStart !== undefined) {
+    const elapsed = s.time - s.state.rollStart;
+    const front = s.state.stopped ? 492 : s.width - 32 - elapsed * 464;
+    const fade = s.state.stopped ? ease(clamp((s.time - s.state.stoppedAt) / .78, 0, 1)) : 0;
+    if (front < -190) return;
+    if (s.state.stopped) {
+      poly([[489, 425], [507, 385], [529, 400], [550, 397], [584, 425]], '#eef8f7', '#b2d2df', 1.6);
+    }
+    ctx.save();
+    ctx.globalAlpha = 1 - fade;
+    for (let i = 0; i < 29; i++) {
+      const px = front + hash(i + 2) * 158;
+      const y = FLOOR - 25 - hash(i + 3) * (i % 7 === 0 ? 127 : 85);
+      oval(px, y, 23 + hash(i) * 28, 12 + hash(i + 7) * 22, i % 2 ? '#f2fafbed' : '#d6e9f3dc', .24);
+    }
+    ctx.restore();
+  }
+}
+
+function setPieces(s) {
+  if (s.id === 'i14') {
+    poly([[426, 425], [726, 225], [825, 425]], '#aad0df99', '#74a9bd9c', 2);
+    poly([[594, 315], [726, 225], [760, 293], [727, 281], [698, 303], [668, 299], [637, 326]], '#f4fcf8');
+    poly([[426, 425], [575, 328], [638, 425]], '#91aebf80');
+  }
+  if (s.id === 'i15') {
+    for (let i = 0; i < 6; i++) {
+      const x = 352 + i * 74, h = 15 + i * 9 + hash(i) * 19;
+      poly([[x - 24, FLOOR], [x - 14, FLOOR - h * .5], [x + 2, FLOOR - h],
+        [x + 14, FLOOR - h * .78], [x + 32, FLOOR]], blend('#8ba4ad', '#54434d', i / 5), '#7b747a', 1);
+    }
+  }
+}
+
+function darkGateArt(s) {
+  if (!s.darkGate || s.state.litAt !== undefined) return;
+  const x = s.exit;
+  const haze = ctx.createLinearGradient(x - 20, 0, x + 20, 0);
+  haze.addColorStop(0, '#adede800');
+  haze.addColorStop(.5, '#adede8b3');
+  haze.addColorStop(1, '#adede800');
+  ctx.fillStyle = haze;
+  ctx.fillRect(x - 20, FLOOR - 132, 40, 132);
+  ctx.save();
+  ctx.setLineDash([3, 7]);
+  line([[x, FLOOR - 132], [x, FLOOR - 4]], '#d5fff0', 1.6);
+  ctx.restore();
+  line([[x, FLOOR - 24], [x, FLOOR + 1]], '#79a8b4', 3);
+  box(x - 19, FLOOR - 41, 38, 23, 7, '#48839b', '#b9e7e5');
+  box(x - 5, FLOOR - 31, 10, 7, 2, '#d6f0e8');
+  ctx.beginPath();
+  ctx.arc(x, FLOOR - 31, 3.5, Math.PI, Math.PI * 2);
+  ctx.strokeStyle = '#d6f0e8';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function levelArt(s) {
+  const palette = palettes[s.chapter];
+  ctx.save();
+  ctx.translate(s.start, 0);
+  setPieces(s);
+  pit(s, palette);
+  terrain(s, palette);
+  if (s.pools) junglePoolArt(s);
+  if (s.vineBank) jungleBankArt(s);
+  groundDecor(s);
+  if (s.id === 'v04') lavaWallArt();
+  if (s.ropes) ropeArt(s);
+  for (const f of s.features) if (f.kind === 'jet') jetArt(s, f);
+  for (const x of s.posts || []) postArt(x);
+  for (const f of s.features) featureArt(s, f);
+  for (const item of s.state.surfaces.values()) platformArt(item, s);
+  growingBridge(s);
+  drawVine(s);
+  for (const item of s.state.residue.values()) residueArt(s, item);
+  for (const plant of s.state.plants.values()) plantArt(s, plant);
+  for (const fire of s.state.fires.values()) {
+    const fading = Math.min(1, (fire.until - s.time) / .8);
+    ctx.save();
+    ctx.globalAlpha = fading;
+    glow(fire.x, fire.y - 10, 39, '#ffa95176');
+    flame(fire.x, fire.y - 6, 25, fire.x);
+    ctx.restore();
+  }
+  for (const column of s.state.lifts.values()) streamArt(column, s);
+  weatherArt(s);
+  darkGateArt(s);
+  if (s.id === 'j10') jungleGateArt(s);
+  ctx.restore();
+}
+
+function wandPose() {
+  const p = player;
+  const lastCast = effects.at(-1);
+  const returning = !channel && lastCast && !lastCast.pickup && !checkpointDelay && gameTime - lastCast.time < .2;
+  const casting = channel || returning;
+  const x = channel ? channel.s.start + channel.target.x : lastCast?.x;
+  const y = channel ? channel.target.y : lastCast?.y;
+  const facing = casting && Math.abs(x - p.x) > 12 ? Math.sign(x - p.x) : p.facing;
+  const aim = casting ? clamp(Math.atan2(y - (p.y - 23), Math.max(16, Math.abs(x - p.x))), -1.43, 1.15) : .49;
+  const age = channel ? gameTime - channel.startedAt : 0;
+  const swing = reducedMotion ? 1 : ease(clamp((age - .07) / .11, 0, 1));
+  let angle = aim;
+  if (channel && !reducedMotion) {
+    const raised = blendAngle(.49, -1.54, ease(clamp(age / .07, 0, 1)));
+    angle = blendAngle(raised, aim, swing);
+  } else if (returning) {
+    angle = blendAngle(aim, .49, ease((gameTime - lastCast.time) / .2));
+  }
+  const walk = p.grounded ? Math.sin(p.walk) * Math.min(5.2, Math.abs(p.vx) / 41) : 0;
+  const bob = -Math.abs(walk) * .37;
+  const hand = [13 + Math.cos(angle) * 5, -22 + Math.sin(angle) * 8];
+  const tip = [hand[0] + Math.cos(angle) * 17, hand[1] + Math.sin(angle) * 17];
+  return { facing, walk, bob, hand, tip, swing };
+}
+
+function blendAngle(from, to, progress) {
+  return from + (to - from) * progress;
+}
+
+function explorer(wand) {
+  const p = player;
+  const { facing, walk, bob, hand, tip } = wand;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  if (p.grounded) oval(0, 1.5, 16, 3.3, '#17334458');
+  ctx.scale(facing, 1);
+  ctx.translate(0, bob);
+  if (checkpointDelay) ctx.globalAlpha = .56;
+  line([[-4, -11], [-8 - walk, -3], [-10 - walk, -1]], '#2b3a54', 6);
+  line([[5, -12], [6 + walk, -4], [10 + walk, -1]], '#1f3450', 6.8);
+  line([[-11 - walk, 0], [-6 - walk, 0]], '#bdd4d3', 1.5);
+  line([[7 + walk, 0], [13 + walk, 0]], '#dbe6da', 1.5);
+  box(-15, -27, 11, 19, 4, '#d1a264', '#7b5d5b');
+  poly([[-8, -29], [6, -29], [11, -20], [9, -9], [-9, -8], [-12, -17]], '#df775c', '#8d5863', 1.5);
+  poly([[1, -27], [8, -23], [8, -10], [3, -9]], '#bc5e55');
+  line([[3, -22], [3, -11]], '#f5a787', 1.4);
+  line([[-7, -25], [-11 - walk * .5, -18], [-14 - walk * .4, -14]], '#ec8e68', 5);
+  line([[8, -24], [12, -18], hand], '#e78c66', 5);
+  line([hand, tip], '#3d2d33', 4.8);
+  line([hand, tip], '#d9b67c', 2.4);
+  oval(tip[0], tip[1], 2.1, 2.1, channel ? elements[channel.el].pale : '#f0d8a0');
+  oval(hand[0], hand[1], 2.7, 3.1, '#ffe7af');
+  oval(-14 - walk * .4, -14, 2.4, 2.8, '#ffe7af');
+  oval(1, -36.1, 10.1, 9.4, '#ffdfa7');
+  ctx.beginPath();
+  ctx.moveTo(-12, -34);
+  ctx.bezierCurveTo(-11, -52, 6, -53, 12, -38);
+  ctx.quadraticCurveTo(3, -42, -7, -36);
+  ctx.closePath();
+  ctx.fillStyle = '#294765';
+  ctx.fill();
+  line([[-9, -43], [-2, -47], [4, -46]], '#52758c', 1.9);
+  oval(7.2, -35.5, 1.45, 1.65, '#304056');
+  oval(8.1, -32, 2.3, 1.35, '#f4a1877c');
+  const flutter = reducedMotion ? 0 : Math.sin(renderTime * 8) * (windPower(stage()) > .3 ? 4.6 : 2.2);
+  line([[-8, -29], [-16, -28 + flutter], [-22, -23 + flutter]], '#3c928f', 5);
+  box(-9, -30, 19, 6, 2, '#65b4a6', '#4b8a88');
+  line([[-8, -29], [6, -29]], '#a9ddba', 1.3);
+  ctx.restore();
+}
+
+
+function channelArt(wand) {
+  if (!channel) return;
+  const { s, target, t, el } = channel;
+  const { color, pale } = elements[el];
+  const x = s.start + target.x, y = target.y;
+  const fromX = player.x + wand.facing * wand.tip[0];
+  const fromY = player.y + wand.bob + wand.tip[1];
+  glow(fromX, fromY, 12 + t * 9, `${color}98`);
+  if (wand.swing < .7) return;
+  const beam = [[fromX, fromY], [x, y]];
+  const dx = x - fromX, dy = y - fromY;
+  const angle = Math.atan2(dy, dx);
+  ctx.save();
+  ctx.globalAlpha = (.5 + t * .45) * wand.swing;
+  line(beam, `${color}52`, 7 + t * 3);
+  line(beam, color, 2.2);
+  for (let i = 0; i < 5; i++) {
+    const p = wrap((reducedMotion ? .1 : renderTime * 2.25) + i / 5, 1);
+    oval(fromX + dx * p, fromY + dy * p, 2.5 + hash(i) * 3, 1.4, pale, angle);
+  }
+  glow(x, y, 18 + t * 14, `${color}70`);
+  ctx.restore();
+}
+
+function spellArt(fx) {
+  const age = gameTime - fx.time;
+  const { color, pale } = elements[fx.el];
+  const burst = clamp(age / .65, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = 1 - burst;
+  glow(fx.x, fx.y, 28 + burst * 21, `${color}80`);
+  for (let i = 0; i < 12; i++) {
+    const angle = i * .55 + hash(i) * .41;
+    const radius = (8 + hash(i + 9) * 32) * burst;
+    oval(fx.x + Math.cos(angle) * radius, fx.y + Math.sin(angle) * radius,
+      1.2 + hash(i + 12) * 2, 1 + hash(i + 13) * 1.4, i % 2 ? color : pale, angle);
+  }
+  ctx.restore();
+}
+
+function travelArt() {
+  const darkness = chamberOpacity();
+  if (darkness > .001) {
+    ctx.fillStyle = `rgba(5, 9, 17, ${darkness})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    if (stage().darkGate && stage().state.litAt === undefined) {
+      ctx.save();
+      ctx.globalAlpha = .32;
+      ctx.translate(stage().start - camera, 0);
+      darkGateArt(stage());
+      ctx.restore();
+    }
+  }
+  if (!travel) return;
+  const t = clamp((gameTime - travel.at) / travel.duration, 0, 1);
+  const amount = Math.sin(Math.PI * t) ** 1.32;
+  if (travel.kind === 'cave') {
+    ctx.fillStyle = `rgba(12, 30, 48, ${amount * .83})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  } else if (travel.kind === 'surface' || travel.kind === 'snow') {
+    const veil = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+    veil.addColorStop(0, '#c8edef00');
+    veil.addColorStop(.69, `rgba(221, 251, 242, ${amount * .65})`);
+    veil.addColorStop(1, `rgba(233, 255, 249, ${amount * .82})`);
+    ctx.fillStyle = veil;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  } else {
+    const veil = ctx.createLinearGradient(0, 0, VIEW_W, VIEW_H);
+    veil.addColorStop(0, `rgba(78, 39, 49, ${amount * .40})`);
+    veil.addColorStop(1, `rgba(228, 130, 79, ${amount * .54})`);
+    ctx.fillStyle = veil;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    for (let i = 0; i < 20; i++) {
+      const x = VIEW_W * hash(i + 20) - t * 35;
+      const y = VIEW_H * hash(i + 11) - t * 83;
+      line([[x, y], [x + 5, y - 13]], `rgba(255, 193, 117, ${amount * .7})`, 1.7);
+    }
+  }
+}
+
+function resizeCanvas() {
+  dpr = Math.min(2, Math.max(1, devicePixelRatio || 1));
+  canvas.width = Math.round(VIEW_W * dpr);
+  canvas.height = Math.round(VIEW_H * dpr);
+}
+
+function paint() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  background();
+  ctx.save();
+  ctx.translate(-camera, 0);
+  for (const s of levels) if (s.end > camera - 30 && s.start < camera + VIEW_W + 30) levelArt(s);
+  for (const fx of effects) spellArt(fx);
+  const wand = wandPose();
+  explorer(wand);
+  channelArt(wand);
+  ctx.restore();
+  travelArt();
+  if (checkpointDelay) {
+    ctx.fillStyle = '#be6d632a';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
+}
+
+const byId = id => document.getElementById(id);
+const sceneView = byId('view');
+const sceneNumber = byId('scene-number');
+const sceneRegion = byId('scene-region');
+const sceneTitle = byId('scene-title');
+const equippedCount = byId('equipped-count');
+const toast = byId('toast');
+const timing = byId('timing');
+const timingText = byId('timing-text');
+const mapDialog = byId('map');
+const guideDialog = byId('guide');
+const hintDialog = byId('hint');
+const winDialog = byId('win');
+const dialogs = [mapDialog, guideDialog, hintDialog, winDialog];
+const routePoints = [];
+const elementButtons = new Map();
+
+const regionNames = {
+  jungle: '丛林世界',
+  snow: '冰雪世界 · 雪原',
+  cave: '冰雪世界 · 冰洞',
+  ridge: '冰雪世界 · 雪岭',
+  volcano: '火山世界'
+};
+const pad = number => String(number).padStart(2, '0');
+const keyElements = Object.fromEntries(Object.entries(elements).map(([id, el]) => [el.key, id]));
+const moveKeys = ['a', 'd', 'arrowleft', 'arrowright', 'w', 'arrowup', ' '];
+
+let seenStage = -1;
+let seenControls = -1;
+let winPresented = false;
+
+function node(tag, classes, content = '') {
+  const item = document.createElement(tag);
+  if (classes) item.className = classes;
+  if (content) item.textContent = content;
+  return item;
+}
+
+function focusGame() {
+  canvas.focus({ preventScroll: true });
+}
+
+function jumpToLevel(index) {
+  for (const dialog of dialogs) if (dialog.open) dialog.close();
+  paused = false;
+  placePlayer(index);
+  winPresented = false;
+  updateHud();
+  focusGame();
+}
+
+function retryLevel() {
+  jumpToLevel(levelIndex);
+  say('已回到本关起点。', 'info', 1.6);
+}
+
+function openDialog(dialog) {
+  if (dialog.open) return;
+  for (const other of dialogs) if (other.open) other.close();
+  keys.clear();
+  player.jumpBuffer = 0;
+  stopCast();
+  paused = true;
+  dialog.showModal();
+}
+
+for (const dialog of dialogs) {
+  dialog.addEventListener('close', () => {
+    paused = dialogs.some(item => item.open);
+    if (!paused) focusGame();
+  });
+}
+
+function openMap() {
+  const grid = byId('map-levels');
+  grid.replaceChildren();
+  for (const [group, list, title] of worlds) {
+    const section = node('section', `map-world ${group}`);
+    const label = node('h3', '', title);
+    label.append(node('small', '', `${list.length} 关`));
+    section.append(label);
+    const cards = node('div', 'map-cards');
+    for (const s of list) {
+      const button = node('button', 'map-card');
+      button.type = 'button';
+      button.dataset.level = s.id;
+      if (s.index === levelIndex) {
+        button.classList.add('current');
+        button.setAttribute('aria-current', 'step');
+      }
+      if (s.original) button.title = `冰雪长图原第 ${s.original} 关`;
+      button.append(node('span', 'map-num', pad(s.number)), node('span', '', s.title));
+      if (cleared.has(s.index)) {
+        const mark = node('span', 'map-check', '✓');
+        mark.setAttribute('aria-label', '已通关');
+        button.append(mark);
+      }
+      button.addEventListener('click', () => jumpToLevel(s.index));
+      cards.append(button);
+    }
+    section.append(cards);
+    grid.append(section);
+  }
+  openDialog(mapDialog);
+}
+
+function openHint() {
+  const s = stage();
+  if (!s.hint) return;
+  byId('hint-subtitle').textContent = `${pad(s.number)} · ${s.title}`;
+  byId('hint-copy').textContent = s.hint;
+  openDialog(hintDialog);
+}
+
+function buildControls() {
+  for (const [id, el] of Object.entries(elements)) {
+    const b = node('button', 'element');
+    b.type = 'button';
+    b.dataset.element = id;
+    b.style.setProperty('--el', el.color);
+    b.append(node('span', 'icon'), node('span', '', el.name), node('kbd', '', el.key));
+    b.addEventListener('click', () => { arm(id); focusGame(); });
+    byId('elements').append(b);
+    elementButtons.set(id, b);
+  }
+  for (const [group, list, title] of worlds) {
+    const section = node('div', `route-world ${group}`);
+    section.append(node('span', 'route-label', title));
+    const points = node('div', 'route-points');
+    for (const s of list) {
+      const b = node('button', 'route-point');
+      b.type = 'button';
+      b.title = `${title} ${pad(s.number)} · ${s.title}`;
+      b.setAttribute('aria-label', b.title);
+      b.addEventListener('click', () => jumpToLevel(s.index));
+      routePoints[s.index] = b;
+      points.append(b);
+    }
+    section.append(points);
+    byId('route').append(section);
+  }
+}
+
+function updateHud() {
+  const s = stage();
+  if (seenStage !== stageVersion) {
+    seenStage = stageVersion;
+    sceneView.dataset.theme = s.chapter;
+    sceneNumber.textContent = pad(s.number);
+    sceneRegion.textContent = regionNames[s.chapter];
+    sceneTitle.textContent = s.title;
+    byId('hint-open').hidden = !s.hint;
+    for (const [index, point] of routePoints.entries()) {
+      point.classList.toggle('done', cleared.has(index));
+      point.classList.toggle('current', index === levelIndex);
+      if (index === levelIndex) point.setAttribute('aria-current', 'step');
+      else point.removeAttribute('aria-current');
+    }
+  }
+  if (seenControls !== controlsVersion) {
+    seenControls = controlsVersion;
+    equippedCount.textContent = `装备 ${equipped.length} / 2`;
+    for (const [id, b] of elementButtons) {
+      const selected = id === activeElement;
+      b.classList.toggle('active', selected);
+      b.classList.toggle('equipped', equipped.includes(id));
+      b.setAttribute('aria-pressed', String(selected));
+      const equippedLabel = equipped.includes(id) ? '已装备' : '可装备';
+      b.setAttribute('aria-label', `${elements[id].name}，${selected ? '当前施法元素' : equippedLabel}，按 ${elements[id].key} 选择`);
+    }
+  }
+  const timer = s.status?.(s);
+  timing.hidden = !timer;
+  if (timer) {
+    if (timingText.textContent !== timer.text) timingText.textContent = timer.text;
+    timing.style.setProperty('--timer', `${Math.round(timer.fraction * 100)}%`);
+  }
+  const visibleNotice = notice && gameTime < notice.until;
+  toast.hidden = !visibleNotice;
+  if (visibleNotice && toast.textContent !== notice.text) toast.textContent = notice.text;
+  if (visibleNotice) toast.dataset.tone = notice.tone;
+  if (finished && !winPresented) {
+    winPresented = true;
+    byId('win-count').textContent = `已获得 ${treasures.size} / ${worlds.length} 件宝物，已通过 ${cleared.size} / ${levels.length} 关。`;
+    openDialog(winDialog);
+  }
+}
+
+byId('map-open').addEventListener('click', openMap);
+byId('guide-open').addEventListener('click', () => openDialog(guideDialog));
+byId('hint-open').addEventListener('click', openHint);
+byId('retry').addEventListener('click', retryLevel);
+byId('win-replay').addEventListener('click', () => {
+  cleared.clear();
+  treasures.clear();
+  for (const s of levels) resetLevel(s);
+  jumpToLevel(0);
+});
+byId('win-map').addEventListener('click', openMap);
+
+window.addEventListener('keydown', event => {
+  if (paused || event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  if (moveKeys.includes(key)) {
+    if (key === ' ' && event.target instanceof HTMLButtonElement) return;
+    event.preventDefault();
+    keys.add(key);
+    if (!event.repeat && (key === ' ' || key === 'w' || key === 'arrowup')) requestJump();
+    return;
+  }
+  if (event.repeat) return;
+  if (keyElements[key]) {
+    event.preventDefault();
+    arm(keyElements[key]);
+    return;
+  }
+  switch (key) {
+    case 'q': swapElement(); break;
+    case 'e': event.preventDefault(); startCast(); break;
+    case 'r': retryLevel(); break;
+    case 'm': openMap(); break;
+    case 'h': openHint(); break;
+    case '?': openDialog(guideDialog); break;
+  }
+});
+window.addEventListener('keyup', event => {
+  const key = event.key.toLowerCase();
+  keys.delete(key);
+  if (key === 'e') stopCast();
+});
+window.addEventListener('blur', () => { keys.clear(); stopCast(); });
+document.addEventListener('visibilitychange', () => {
+  lastFrame = 0;
+  if (document.hidden) { keys.clear(); stopCast(); }
+});
+
+function cursorPosition(event) {
+  const area = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - area.left) * VIEW_W / area.width,
+    y: (event.clientY - area.top) * VIEW_H / area.height
+  };
+}
+
+canvas.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || paused || finished) return;
+  event.preventDefault();
+  focusGame();
+  canvas.setPointerCapture(event.pointerId);
+  const point = cursorPosition(event);
+  startCast({ x: camera + point.x, y: point.y });
+});
+const touchCast = byId('touch-cast');
+touchCast.addEventListener('pointerdown', event => {
+  event.preventDefault();
+  touchCast.setPointerCapture(event.pointerId);
+  startCast();
+});
+for (const target of [canvas, touchCast]) {
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    target.addEventListener(name, stopCast);
+}
+for (const b of document.querySelectorAll('[data-hold]')) {
+  b.addEventListener('pointerdown', event => {
+    event.preventDefault();
+    b.setPointerCapture(event.pointerId);
+    keys.add(b.dataset.hold);
+    if (b.dataset.hold === 'w') requestJump();
+  });
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    b.addEventListener(name, () => keys.delete(b.dataset.hold));
+}
+
+let lastFrame = 0;
+let accumulator = 0;
+let nextHud = 0;
+function frame(now) {
+  const dt = lastFrame ? Math.min(.18, (now - lastFrame) / 1000) : 0;
+  lastFrame = now;
+  if (!paused && !document.hidden) {
+    accumulator += dt;
+    while (accumulator >= STEP) {
+      advance(STEP);
+      accumulator -= STEP;
+    }
+    followCamera(dt);
+    renderTime += dt;
+  } else {
+    accumulator = 0;
+  }
+  if (seenStage !== stageVersion || seenControls !== controlsVersion || now >= nextHud) {
+    updateHud();
+    nextHud = now + 42;
+  }
+  paint();
+  requestAnimationFrame(frame);
+}
+
+buildControls();
+resizeCanvas();
+updateHud();
+window.addEventListener('resize', resizeCanvas);
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
