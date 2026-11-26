@@ -1,0 +1,93 @@
+name: Game tests and Pages
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: testfolder
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: testfolder/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Upload browser test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-evidence
+          path: |
+            testfolder/playwright-report/
+            testfolder/test-results/
+          retention-days: 14
+
+  package:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Build publishable files
+        env:
+          PLAYTEST_API_URL: ${{ vars.PLAYTEST_API_URL }}
+        run: node scripts/build-pages.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    outputs:
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - id: pages
+        uses: actions/deploy-pages@v4
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify the published game and dashboard
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 4 --retry-all-errors --max-time 15 "${PAGE_URL%/}/" -o game.html
+          grep -Fq 'id="game"' game.html
+          curl --fail --silent --show-error --retry 4 --retry-all-errors --max-time 15 "${PAGE_URL%/}/stats.html" -o stats.html
+          grep -Fq 'id="online"' stats.html

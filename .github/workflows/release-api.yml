@@ -1,0 +1,32 @@
+name: Release API snapshot
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Record response from GitHub Releases REST API
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-snapshot.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-api
+          path: release-api.json
+          if-no-files-found: ignore
+          retention-days: 14

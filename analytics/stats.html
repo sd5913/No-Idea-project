@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="playtest-api" content="">
+  <title>试玩统计 · 元素旅途</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #111b21; color: #f1f7f6; }
+    body { margin: 0; }
+    main { max-width: 940px; margin: auto; padding: clamp(20px, 6vw, 56px); }
+    a { color: #a5e9ab; }
+    h1 { margin: 18px 0 4px; font-size: clamp(2rem, 6vw, 3.5rem); }
+    p, dt { color: #b2c4c7; }
+    dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; margin: 24px 0; }
+    dl > div { padding: 14px; border: 1px solid #40565b; border-radius: 8px; background: #1a282f; }
+    dd { margin: 4px 0 0; font-size: 2rem; color: #a5e9ab; font-variant-numeric: tabular-nums; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 540px; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #40565b; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    button { font: inherit; padding: .4em .7em; }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="./">返回游戏</a>
+    <h1>试玩统计</h1>
+    <p>统计来自主动参与的会话。在线会话按最近 90 秒内的心跳计算，其余指标覆盖最近 7 天。</p>
+    <dl>
+      <div><dt>当前在线会话</dt><dd id="online">—</dd></div>
+      <div><dt>参与统计会话</dt><dd id="visits">—</dd></div>
+      <div><dt>路线通关率</dt><dd id="completion">—</dd></div>
+      <div><dt>路线中位通关耗时</dt><dd id="duration">—</dd></div>
+    </dl>
+    <p id="status" role="status">正在读取统计。</p>
+    <button id="refresh" type="button" hidden>立即刷新</button>
+    <h2>关卡事件</h2>
+    <div class="table-wrap" role="region" aria-label="关卡事件表" tabindex="0">
+      <table>
+        <thead>
+          <tr><th scope="col">关卡</th><th scope="col">路线类型</th><th scope="col">进入</th><th scope="col">失败</th><th scope="col">重试</th><th scope="col">通过</th><th scope="col">宝物</th></tr>
+        </thead>
+        <tbody id="levels"></tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    const api = document.querySelector('meta[name="playtest-api"]').content;
+    const byId = id => document.getElementById(id);
+    const refreshButton = byId('refresh');
+    const set = (id, value) => { byId(id).textContent = value; };
+
+    async function refresh() {
+      if (refreshButton.disabled) return;
+      refreshButton.disabled = true;
+      try {
+        const response = await fetch(api + '/stats', { signal: AbortSignal.timeout(5000) });
+        if (!response.ok) throw new Error('Counters unavailable');
+        const stats = await response.json();
+        set('online', stats.online);
+        set('visits', stats.visits);
+        set('completion', stats.routeRuns ? Math.round(100 * stats.completedRuns / stats.routeRuns) + '%' : '—');
+        set('duration', stats.medianMs === null ? '—' : Math.round(stats.medianMs / 1000) + ' 秒');
+        byId('levels').replaceChildren(...stats.levels.map(level => {
+          const row = document.createElement('tr');
+          for (const value of [level.level, level.mode === 'map' ? '使用选关' : '正常路线',
+            level.entered, level.falls, level.retries, level.cleared, level.treasures]) {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.append(cell);
+          }
+          return row;
+        }));
+        const time = new Date(stats.updatedAt).toLocaleTimeString('zh-Hans');
+        set('status', `更新于 ${time}。正常路线通关 ${stats.completedRuns}/${stats.routeRuns} 局。`);
+      } catch {
+        set('status', '暂时无法更新统计。页面保留最近一次成功读取的结果。');
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    if (api) {
+      refreshButton.hidden = false;
+      refreshButton.addEventListener('click', refresh);
+      refresh();
+      setInterval(() => { if (!document.hidden) refresh(); }, 30_000);
+    } else {
+      set('status', '这个版本未配置试玩统计。');
+    }
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "npm run test:logic && npm run test:browser",
-    "test:logic": "node --test game.test.cjs",
+    "test:logic": "node --test game.test.cjs analytics.test.mjs",
     "test:browser": "playwright test"
   },
   "devDependencies": {
