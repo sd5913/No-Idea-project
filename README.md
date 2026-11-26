@@ -1,6 +1,5 @@
 # Elemental Journey
-
-<<<<<<< HEAD
+试玩链接（不需要部署）：https://funny-kheer-fcf370.netlify.app/
 [中文](#中文) · [English](#english)
 
 ## 中文
