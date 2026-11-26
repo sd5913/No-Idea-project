@@ -1,6 +1,6 @@
 # Elemental Journey · 元素旅途
 
-[在线试玩 / Play online](https://funny-kheer-fcf370.netlify.app/)
+[在线试玩 / Play online via GitHub Pages](https://sd5913.github.io/No-Idea-project/) · 首次部署成功后可访问 / Available after the first successful deployment.
 
 [中文](#中文) · [English](#english)
 
@@ -69,3 +69,10 @@ Touch controls provide movement, jumping, climbing, and casting. The Jungle uses
 | Cool lava at a designated location | The lava forms a stepping stone |
 
 Rooms combine these reactions with jumping, climbing, and moving platforms. Casting animates a wand swing, a straight beam, and a burst at the target. As a vine bridge grows, its walkable surface expands with the visible bridge.
+
+## 项目与交付 · Project and delivery
+
+- **适合谁 / Audience.** 面向喜欢观察场景、尝试元素组合的休闲解谜玩家。玩家可以从第一关开始学习，也可以用地图直接体验不同机关。 A short browser puzzle game for players who enjoy experimenting with their environment.
+- **运行 / Setup.** 使用支持 Canvas 2D 的现代桌面或移动浏览器。下载整合版 HTML 后可直接打开。核心玩法可离线运行，进度只保留在当前页面。移动端提供触控按钮，自动化当前使用 Chromium。
+- **协作与验证 / Team and verification.** [每周进度与协作记录 / Weekly progress and planning](docs/progress.md) · [工程规范 / Contributing](CONTRIBUTING.md) · [测试说明 / Tests](testfolder/README.md) · [致谢与来源 / Credits](docs/credits.md)。
+- **发布与统计 / Deployment and analytics.** [GitHub Actions](https://github.com/sd5913/No-Idea-project/actions) · [发布、试玩统计和配置 / Deployment and analytics setup](docs/deployment.md)。

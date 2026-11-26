@@ -1,4 +1,5 @@
 const { join } = require('node:path');
+const { readFileSync } = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { test, expect } = require('@playwright/test');
 
@@ -15,6 +16,7 @@ test('启动无脚本异常，地图显示 30 关并能从三个世界选关', a
   await page.reload();
   await expect(page.locator('#game')).toBeVisible();
   await expect(page.locator('#scene-title')).toHaveText('荆棘小径');
+  await expect(page.locator('#playtest-settings')).toBeHidden();
 
   for (const [id, region, number] of [
     ['j05', '丛林世界', '05'],
@@ -101,6 +103,52 @@ test('实际长按 E 烧掉枯藤，R 重试恢复机关和起点并保留本局
   await expect(page.locator('#map [data-level="j02"] .map-check')).toBeVisible();
 });
 
+test('从新游戏起点通过枯藤关并进入下一关', async ({ page }) => {
+  await page.keyboard.down('d');
+  await expect.poll(() => page.evaluate(() => player.x)).toBeGreaterThan(190);
+  await page.keyboard.up('d');
+  await page.keyboard.press('1');
+  await page.keyboard.down('e');
+  await expect.poll(() => page.evaluate(() => stage().state.burned.has('thicket'))).toBe(true);
+  await page.keyboard.up('e');
+
+  await page.keyboard.down('d');
+  await expect(page.locator('#scene-title')).toHaveText('雨后的种槽');
+  await page.keyboard.up('d');
+  await page.keyboard.press('m');
+  await expect(page.locator('#map [data-level="j01"] .map-check')).toBeVisible();
+});
+
+test.describe('窄屏触控', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test('触控按钮可跳跃和长按施法，地图可选关', async ({ page }) => {
+    const initialY = await page.evaluate(() => player.y);
+    await page.getByRole('button', { name: '跳跃 / 攀爬' }).tap();
+    await expect.poll(() => page.evaluate(() => player.y)).toBeLessThan(initialY - 15);
+
+    await page.waitForFunction(() => player.grounded);
+    await page.evaluate(() => { player.x = stage().start + 193; });
+    await page.locator('[data-element="fire"]').tap();
+    const button = await page.locator('#touch-cast').boundingBox();
+    const input = await page.context().newCDPSession(page);
+    try {
+      await input.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [{ x: button.x + button.width / 2, y: button.y + button.height / 2 }],
+      });
+      await expect.poll(() => page.evaluate(() => stage().state.burned.has('thicket'))).toBe(true);
+    } finally {
+      await input.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await input.detach();
+    }
+    await page.locator('#map-open').tap();
+    await expect(page.locator('#map .map-card')).toHaveCount(30);
+    await page.locator('#map [data-level="v01"]').tap();
+    await expect(page.locator('#scene-title')).toHaveText('岩浆踏石');
+  });
+});
+
 test('拾取火山宝物显示结算，从丛林重玩会清空进度', async ({ page }) => {
   await page.keyboard.press('m');
   await page.locator('#map [data-level="v09"]').click();
@@ -122,4 +170,66 @@ test('拾取火山宝物显示结算，从丛林重玩会清空进度', async ({
     .toEqual({ cleared: 0, treasures: 0 });
   await page.keyboard.press('m');
   await expect(page.locator('#map .map-check')).toHaveCount(0);
+});
+
+test('玩家主动参与后上报，两个会话出现在看板上，退出同意后停止发送', async ({ page, browser }) => {
+  const origin = 'https://game.test';
+  const api = 'https://api.test';
+  const { default: worker } = await import('../analytics/worker.mjs');
+  const { createPlaytestDatabase } = await import('./fixtures/playtest-db.mjs');
+  const { sqlite, db } = createPlaytestDatabase();
+  const second = await browser.newPage();
+  let eventRequests = 0;
+  async function openGame(client) {
+    await client.route(origin + '/**', async route => {
+      const dashboard = new URL(route.request().url()).pathname === '/stats.html';
+      const file = dashboard ? '../analytics/stats.html' : '../Elemental_Journey_Integrated.html';
+      const html = readFileSync(join(__dirname, file), 'utf8')
+        .replace('<meta name="playtest-api" content="">', `<meta name="playtest-api" content="${api}">`);
+      await route.fulfill({ contentType: 'text/html', body: html });
+    });
+    await client.route(api + '/**', async route => {
+      const request = route.request();
+      if (request.method() === 'POST') eventRequests++;
+      const response = await worker.fetch(new Request(request.url(), {
+        method: request.method(),
+        headers: await request.allHeaders(),
+        body: request.postData() ?? undefined,
+      }), { DB: db, SITE_ORIGIN: origin });
+      await route.fulfill({
+        status: response.status,
+        headers: Object.fromEntries(response.headers),
+        body: await response.text(),
+      });
+    });
+    await client.goto(origin + '/');
+    await client.locator('#playtest-settings summary').click();
+  }
+
+  try {
+    await openGame(page);
+    await openGame(second);
+    await page.keyboard.press('r');
+    expect(eventRequests).toBe(0);
+    await page.locator('#playtest-consent').check();
+    await second.locator('#playtest-consent').check();
+    await expect.poll(() => sqlite.prepare('SELECT COUNT(*) AS total FROM presence').get().total).toBe(2);
+    await expect.poll(() => sqlite.prepare("SELECT COUNT(*) AS total FROM events WHERE kind = 'visit'").get().total).toBe(2);
+    await page.keyboard.press('m');
+    await page.locator('#map [data-level="v01"]').click();
+    await expect.poll(() => sqlite.prepare("SELECT COUNT(*) AS total FROM events WHERE level_id = 'v01' AND mode = 'map'").get().total).toBe(1);
+    await page.locator('#playtest-consent').uncheck();
+    const before = eventRequests;
+    await page.keyboard.press('r');
+    await expect(page.locator('#toast')).toContainText('已回到本关起点');
+    expect(eventRequests).toBe(before);
+    await second.goto(origin + '/stats.html');
+    await expect(second.locator('#online')).toHaveText('2');
+    await expect(second.locator('#visits')).toHaveText('2');
+    await expect(second.locator('#levels')).toContainText('使用选关');
+  } finally {
+    await second.close();
+    await page.unrouteAll({ behavior: 'wait' });
+    sqlite.close();
+  }
 });

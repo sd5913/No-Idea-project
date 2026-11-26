@@ -20,7 +20,7 @@
 
 ## 测试与验收
 
-整合版直接用浏览器打开。自动化测试需要 Node.js 20 或更高版本。在 `testfolder` 中首次运行以下命令，后续可直接运行 `npm test`。
+整合版直接用浏览器打开。自动化测试需要 Node.js 22.13 或更高版本。在 `testfolder` 中首次运行以下命令，后续可直接运行 `npm test`。
 
 ```sh
 npm ci
@@ -48,4 +48,4 @@ npm test
 
 ## 发布检查
 
-发布前确认目标平台实际使用的分支、静态目录和游戏入口。`.openai/hosting.json` 中记录的目录是 `dist`，仓库中的早期原型位于 `Elemental-Journey-Web/dist/`。发布整合版时，核对平台入口是否指向三世界游戏。发布后在实际网址打开游戏，检查初始关卡和地图能否加载。
+发布工作流从 `main` 构建整合版并发布到 GitHub Pages。发布包在 `_site/`，入口是打包后的 `index.html`。具体设置、试玩统计和回滚方法见 [发布指南](docs/deployment.md)。

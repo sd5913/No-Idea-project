@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#142027">
+<meta name="playtest-api" content="">
 <title>Elemental Journey · 元素旅途</title>
 <style>
 :root {
@@ -162,6 +163,9 @@ canvas { display: block; width: 100%; height: 100%; outline: none; touch-action:
 .touch-controls { display: none; gap: 7px; justify-content: space-between; margin-top: 9px; }
 .touch-controls > div { display: flex; gap: 6px; }
 .touch-controls .button { touch-action: none; min-width: 43px; user-select: none; }
+#playtest-settings { margin-top: 12px; color: var(--muted); }
+#playtest-settings p { margin: 4px 0; }
+#playtest-settings a { color: var(--ice); }
 dialog {
   width: min(760px, calc(100vw - 32px)); max-height: min(82vh, 750px); padding: 0;
   background: #1a2931; color: var(--text); border: 1px solid #52717b; border-radius: 17px;
@@ -297,6 +301,12 @@ dialog::backdrop { background: #09121cd9; backdrop-filter: blur(6px); }
     </div>
   </div>
   <nav id="route" class="route" aria-label="路线进度和快速选关"></nav>
+  <details id="playtest-settings" hidden>
+    <summary>试玩统计</summary>
+    <p>勾选后会分享本页随机会话编号、在线心跳及关卡事件。此选择仅在当前页面生效。</p>
+    <label><input id="playtest-consent" type="checkbox"> 参与本次试玩统计</label>
+    <a href="stats.html">查看汇总</a>
+  </details>
 </main>
 
 <dialog id="map" aria-labelledby="map-title">
@@ -996,6 +1006,9 @@ const keys = new Set();
 const cleared = new Set();
 const treasures = new Set();
 const effects = [];
+let reportPlaytest = () => {};
+let playtestRouteMode = 'route';
+let runStartTime = 0;
 const player = {
   x: 83, y: FLOOR, vx: 0, vy: 0, facing: 1, grounded: true,
   climbing: false, jumpBuffer: 0, coyote: 0, support: '', walk: 0, liftLock: 0
@@ -1070,6 +1083,7 @@ function requestJump() {
 
 function fail(message) {
   if (checkpointDelay) return;
+  reportPlaytest('fall', stage());
   say(message, 'danger', 2.9);
   checkpointDelay = gameTime + 0.44;
   player.vx = 0;
@@ -1079,6 +1093,10 @@ function fail(message) {
 
 function finishJourney() {
   cleared.add(levelIndex);
+  reportPlaytest('level_clear', stage());
+  if (treasures.size === worlds.length && cleared.size === levels.length) {
+    reportPlaytest('run_complete', stage(), Math.round((gameTime - runStartTime) * 1000));
+  }
   finished = true;
   player.vx = 0;
   player.vy = 0;
@@ -1438,6 +1456,7 @@ function collectTreasure(s) {
   if (!gem || treasures.has(s.world)) return;
   if (Math.abs(player.x - s.start - gem.x) >= 35 || Math.abs(player.y - 22 - gem.y) >= 32) return;
   treasures.add(s.world);
+  reportPlaytest('treasure', s);
   effects.push({ time: gameTime, x: s.start + gem.x, y: gem.y,
     el: s.world === 'jungle' ? 'grass' : s.world === 'ice' ? 'water' : 'fire', pickup: true });
   if (s.world === 'fire') finishJourney();
@@ -1607,10 +1626,13 @@ function advance(dt) {
 
   if (player.x >= s.end && levelIndex < levels.length - 1) {
     cleared.add(levelIndex);
+    reportPlaytest('level_clear', s);
     setCurrent(levelIndex + 1);
+    reportPlaytest('level_enter', stage());
     if (s.transition) beginTravel(s.transition);
   } else if (player.x < s.start && levelIndex > 0) {
     setCurrent(levelIndex - 1);
+    reportPlaytest('level_enter', stage());
   }
 }
 
@@ -2910,8 +2932,15 @@ function jumpToLevel(index) {
 }
 
 function retryLevel() {
+  reportPlaytest('retry', stage());
   jumpToLevel(levelIndex);
   say('已回到本关起点。', 'info', 1.6);
+}
+
+function selectLevel(index) {
+  playtestRouteMode = 'map';
+  jumpToLevel(index);
+  reportPlaytest('level_enter', stage());
 }
 
 function openDialog(dialog) {
@@ -2955,7 +2984,7 @@ function openMap() {
         mark.setAttribute('aria-label', '已通关');
         button.append(mark);
       }
-      button.addEventListener('click', () => jumpToLevel(s.index));
+      button.addEventListener('click', () => selectLevel(s.index));
       cards.append(button);
     }
     section.append(cards);
@@ -2992,7 +3021,7 @@ function buildControls() {
       b.type = 'button';
       b.title = `${title} ${pad(s.number)} · ${s.title}`;
       b.setAttribute('aria-label', b.title);
-      b.addEventListener('click', () => jumpToLevel(s.index));
+      b.addEventListener('click', () => selectLevel(s.index));
       routePoints[s.index] = b;
       points.append(b);
     }
@@ -3055,6 +3084,10 @@ byId('win-replay').addEventListener('click', () => {
   treasures.clear();
   for (const s of levels) resetLevel(s);
   jumpToLevel(0);
+  playtestRouteMode = 'route';
+  runStartTime = gameTime;
+  reportPlaytest('run_start', stage());
+  reportPlaytest('level_enter', stage());
 });
 byId('win-map').addEventListener('click', openMap);
 
@@ -3161,6 +3194,72 @@ resizeCanvas();
 updateHud();
 window.addEventListener('resize', resizeCanvas);
 requestAnimationFrame(frame);
+
+function setupPlaytest() {
+  const api = document.querySelector('meta[name="playtest-api"]').content;
+  if (!api || !['http:', 'https:'].includes(location.protocol) || !crypto.randomUUID) return;
+
+  const settings = byId('playtest-settings');
+  const consent = byId('playtest-consent');
+  consent.checked = false;
+  settings.hidden = false;
+  let sessionId;
+  let runId;
+  let controller;
+  let timer;
+  let hadVisit = false;
+  let runRegistered = false;
+
+  function send(path, body) {
+    if (!controller) return;
+    fetch(api + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, ...body }),
+      signal: controller.signal,
+      referrerPolicy: 'no-referrer',
+    }).catch(() => {});
+  }
+
+  function heartbeat() {
+    if (!document.hidden) send('/presence', {});
+  }
+
+  reportPlaytest = (kind, scene, durationMs) => {
+    if (kind === 'run_start') {
+      runId = crypto.randomUUID();
+      runRegistered = false;
+    }
+    if (!controller) return;
+    send('/events', {
+      id: crypto.randomUUID(), runId, kind, levelId: scene.id, mode: playtestRouteMode, durationMs,
+    });
+    if (kind === 'run_start') runRegistered = true;
+  };
+
+  consent.addEventListener('change', () => {
+    if (consent.checked) {
+      sessionId ??= crypto.randomUUID();
+      runId ??= crypto.randomUUID();
+      controller = new AbortController();
+      if (!hadVisit) {
+        hadVisit = true;
+        reportPlaytest('visit', stage());
+      }
+      if (!runRegistered && levelIndex === 0 && !cleared.size && !treasures.size) reportPlaytest('run_start', stage());
+      reportPlaytest('level_enter', stage());
+      heartbeat();
+      timer = setInterval(heartbeat, 30_000);
+    } else {
+      controller?.abort();
+      controller = null;
+      clearInterval(timer);
+    }
+  });
+  document.addEventListener('visibilitychange', heartbeat);
+}
+
+setupPlaytest();
 
 </script>
 </body>

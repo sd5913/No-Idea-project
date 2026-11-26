@@ -1,0 +1,19 @@
+name = "elemental-journey-playtest"
+main = "worker.mjs"
+compatibility_date = "2026-11-26"
+
+[vars]
+SITE_ORIGIN = "https://sd5913.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "elemental-journey-playtest"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 240, period = 60 }
+
+[triggers]
+crons = ["17 0 * * *"]

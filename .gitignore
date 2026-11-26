@@ -1,0 +1,7 @@
+/_site/
+/release-api.json
+/.wrangler/
+/analytics/.wrangler/
+/analytics/wrangler.toml
+/analytics/.dev.vars*
+/analytics/.env*
